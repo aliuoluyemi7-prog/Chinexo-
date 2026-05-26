@@ -13,293 +13,156 @@
   --green: #22C55E;
   --red: #EF4444;
   --amber: #F59E0B;
-  --light: #F3F5F9;
   --border: rgba(255,255,255,0.1);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: var(--navy);
-  min-height: 100vh;
-  color: white;
-}
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--navy); min-height: 100vh; color: white; }
 
 /* LOGIN */
 #loginScreen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: var(--navy);
-  position: relative;
-  overflow: hidden;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px; position: relative; overflow: hidden;
 }
 #loginScreen::before {
-  content: '';
-  position: absolute;
-  top: -100px; right: -100px;
+  content: ''; position: absolute; top: -100px; right: -100px;
   width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(35,104,254,0.25) 0%, transparent 70%);
-  border-radius: 50%;
+  background: radial-gradient(circle, rgba(35,104,254,0.25) 0%, transparent 70%); border-radius: 50%;
 }
 #loginScreen::after {
-  content: '';
-  position: absolute;
-  bottom: -80px; left: -80px;
+  content: ''; position: absolute; bottom: -80px; left: -80px;
   width: 250px; height: 250px;
-  background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%);
-  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%); border-radius: 50%;
 }
 .login-box {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 32px 24px;
-  width: 100%;
-  max-width: 360px;
-  backdrop-filter: blur(10px);
-  position: relative;
-  z-index: 1;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 20px; padding: 32px 24px; width: 100%; max-width: 360px;
+  backdrop-filter: blur(10px); position: relative; z-index: 1;
 }
-.login-logo {
-  text-align: center;
-  margin-bottom: 28px;
-}
-.login-logo h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 28px;
-  color: white;
-}
-.login-logo p {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-top: 4px;
-}
-.field-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.5);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  display: block;
-}
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: white; }
+.login-logo p { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+.field-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: block; }
 .field-input {
-  width: 100%;
-  padding: 13px 16px;
-  background: rgba(255,255,255,0.08);
-  border: 1.5px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  font-size: 14px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  color: white;
-  outline: none;
-  margin-bottom: 16px;
-  transition: border 0.2s;
+  width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif; color: white; outline: none; margin-bottom: 16px;
 }
 .field-input:focus { border-color: var(--blue); }
 .field-input::placeholder { color: rgba(255,255,255,0.25); }
 .login-btn {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, var(--blue), #1a52d4);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(35,104,254,0.35);
+  width: 100%; padding: 14px; background: linear-gradient(135deg, var(--blue), #1a52d4);
+  color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer;
 }
-.login-btn:active { opacity: 0.85; }
 .login-error {
-  background: rgba(239,68,68,0.15);
-  border: 1px solid rgba(239,68,68,0.3);
-  color: #fca5a5;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  margin-top: 12px;
-  display: none;
+  background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5; padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-top: 12px; display: none;
 }
 
 /* ADMIN PANEL */
 #adminScreen { display: none; padding: 0 0 40px; }
-
 .admin-top {
-  background: rgba(255,255,255,0.04);
-  border-bottom: 1px solid var(--border);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--border);
+  padding: 16px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
 }
-.admin-top h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 22px;
-}
+.admin-top h1 { font-family: 'Playfair Display', serif; font-size: 22px; }
 .admin-top h1 span { color: var(--green); }
-.logout-btn {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.7);
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  cursor: pointer;
+.back-btn {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.7); padding: 8px 14px; border-radius: 8px;
+  font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer;
 }
-
 .admin-body { padding: 16px; }
 
-/* PLATFORM SUMMARY */
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-.summary-card {
-  border-radius: 14px;
-  padding: 16px;
-  text-align: center;
-}
+/* SUMMARY */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.summary-card { border-radius: 14px; padding: 16px; text-align: center; }
 .summary-card.blue { background: rgba(35,104,254,0.15); border: 1px solid rgba(35,104,254,0.25); }
 .summary-card.green { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); }
-.summary-card.red { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); }
-.summary-card.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
-.summary-val {
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-}
+.summary-val { font-size: 26px; font-weight: 800; line-height: 1; }
 .summary-card.blue .summary-val { color: #60a5fa; }
 .summary-card.green .summary-val { color: #4ade80; }
-.summary-card.red .summary-val { color: #f87171; }
-.summary-card.amber .summary-val { color: #fbbf24; }
-.summary-lbl {
-  font-size: 10px;
-  color: rgba(255,255,255,0.4);
-  margin-top: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* SECTION HEADER */
-.section-hdr {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
-}
+.summary-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+.section-hdr { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
 
 /* SCHOOL CARD */
 .school-card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  transition: background 0.2s;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 16px; margin-bottom: 12px;
 }
-.school-card:active { background: rgba(255,255,255,0.08); }
-.school-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 3px;
+.school-card.suspended { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
+.school-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.school-name-btn {
+  font-size: 16px; font-weight: 700; color: white; background: none; border: none;
+  cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; text-align: left;
+  text-decoration: underline; text-decoration-color: rgba(255,255,255,0.2); padding: 0;
 }
-.school-meta {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
-  line-height: 1.5;
-  margin-bottom: 12px;
+.school-name-btn:hover { color: #60a5fa; }
+.status-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+  white-space: nowrap; margin-left: 8px; flex-shrink: 0;
 }
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
+.status-badge.active { background: rgba(34,197,94,0.2); color: #4ade80; }
+.status-badge.suspended { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.school-meta { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.5; margin-bottom: 14px; }
+.school-student-count {
+  background: rgba(255,255,255,0.07); border-radius: 10px; padding: 10px;
+  text-align: center; margin-bottom: 14px;
 }
-.stat-box {
-  border-radius: 10px;
-  padding: 10px 8px;
-  text-align: center;
-}
-.stat-box.neutral { background: rgba(255,255,255,0.07); }
-.stat-box.g { background: rgba(34,197,94,0.12); }
-.stat-box.r { background: rgba(239,68,68,0.12); }
-.stat-val {
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1;
-}
-.stat-box.neutral .stat-val { color: white; }
-.stat-box.g .stat-val { color: #4ade80; }
-.stat-box.r .stat-val { color: #f87171; }
-.stat-lbl {
-  font-size: 9px;
-  color: rgba(255,255,255,0.4);
-  margin-top: 3px;
-  text-transform: uppercase;
-}
+.school-student-count strong { font-size: 22px; font-weight: 800; color: white; display: block; }
+.school-student-count span { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+.school-footer { font-size: 10px; color: rgba(255,255,255,0.25); margin-bottom: 14px; }
 
-/* PROGRESS BAR */
-.prog-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 6px;
+/* ACTION BUTTONS */
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.action-btn {
+  padding: 11px 8px; border-radius: 10px; font-size: 12px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; border: none; text-align: center;
 }
-.prog-pct { font-weight: 700; }
-.prog-track {
-  height: 5px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 5px;
-  overflow: hidden;
-}
-.prog-fill {
-  height: 100%;
-  border-radius: 5px;
-  transition: width 0.8s ease;
-}
+.action-btn.suspend { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+.action-btn.unsuspend { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+.action-btn.delete { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
 
-.school-footer {
-  font-size: 10px;
-  color: rgba(255,255,255,0.25);
-  margin-top: 10px;
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200; align-items: flex-end;
 }
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #1a2744; border-radius: 24px 24px 0 0; padding: 24px 20px;
+  width: 100%; max-height: 80vh; overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 auto 20px; }
+.modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 4px; }
+.modal-close {
+  position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1);
+  border: none; color: white; width: 32px; height: 32px; border-radius: 50%;
+  font-size: 16px; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.profile-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.profile-row:last-child { border-bottom: none; }
+.profile-icon { font-size: 18px; width: 36px; text-align: center; flex-shrink: 0; }
+.profile-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+.profile-value { font-size: 14px; font-weight: 600; color: white; margin-top: 2px; }
+.profile-value a { color: #4ade80; text-decoration: none; }
 
 /* LOADER */
-.loader-wrap {
-  text-align: center;
-  padding: 48px 20px;
-  color: rgba(255,255,255,0.4);
-  font-size: 14px;
-}
-.spinner {
-  width: 36px; height: 36px;
-  border: 3px solid rgba(255,255,255,0.1);
-  border-top-color: var(--blue);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 12px;
-}
+.loader-wrap { text-align: center; padding: 48px 20px; color: rgba(255,255,255,0.4); font-size: 14px; }
+.spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* EMPTY */
 .empty { text-align: center; padding: 48px 20px; color: rgba(255,255,255,0.4); font-size: 14px; }
+
+/* TOAST */
+.toast-msg {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 700;
+  z-index: 999; font-family: 'Plus Jakarta Sans', sans-serif;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3); white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -312,8 +175,8 @@ body {
       <p>Admin Panel</p>
     </div>
     <label class="field-label">Admin Password</label>
-    <input class="field-input" type="password" id="adminPassInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doAdminLogin()">
-    <button class="login-btn" onclick="doAdminLogin()">Access Admin Panel →</button>
+    <input class="field-input" type="password" id="adminPassInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Access Admin Panel →</button>
     <div class="login-error" id="loginErr">Incorrect password. Try again.</div>
   </div>
 </div>
@@ -322,7 +185,7 @@ body {
 <div id="adminScreen">
   <div class="admin-top">
     <h1>Chinexo <span>Admin</span></h1>
-    <button class="logout-btn" onclick="doLogout()">← Back</button>
+    <button class="back-btn" onclick="doLogout()">← Logout</button>
   </div>
   <div class="admin-body">
     <div id="adminContent">
@@ -331,23 +194,33 @@ body {
   </div>
 </div>
 
+<!-- SCHOOL PROFILE MODAL -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal" style="position:relative">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeProfile()">✕</button>
+    <div class="modal-title" id="profileName">School Profile</div>
+    <div id="profileBody" style="margin-top:16px"></div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://lvjzvevfwlrnaoefhoeg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2anp2ZXZmd2xybmFvZWZob2VnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MTY2MTMsImV4cCI6MjA5NTE5MjYxM30.uV3Me_GLFflq-pLCwg9CDIVO68y0sVXn3HNBtBLUe6M';
-const ADMIN_PASSWORD = 'chinexo2024'; // ← CHANGE THIS to your real admin password
+const ADMIN_PASSWORD = 'chinexo2024';
 
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function doAdminLogin() {
+function doLogin() {
   const pass = document.getElementById('adminPassInput').value.trim();
-  const errEl = document.getElementById('loginErr');
+  const err = document.getElementById('loginErr');
   if (pass === ADMIN_PASSWORD) {
-    errEl.style.display = 'none';
+    err.style.display = 'none';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
-    loadAdminPanel();
+    loadPanel();
   } else {
-    errEl.style.display = 'block';
+    err.style.display = 'block';
   }
 }
 
@@ -357,70 +230,152 @@ function doLogout() {
   document.getElementById('adminPassInput').value = '';
 }
 
-async function loadAdminPanel() {
+function showToast(msg, color) {
+  const t = document.createElement('div');
+  t.className = 'toast-msg';
+  t.textContent = msg;
+  t.style.background = color || '#16a34a';
+  t.style.color = 'white';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ===== PROFILE MODAL =====
+function openProfile(school) {
+  const waNum = (school.admin_phone || '').replace(/^0/, '234');
+  document.getElementById('profileName').textContent = school.name;
+  document.getElementById('profileBody').innerHTML = `
+    <div class="profile-row">
+      <div class="profile-icon">🏫</div>
+      <div>
+        <div class="profile-label">School Name</div>
+        <div class="profile-value">${school.name}</div>
+      </div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-icon">📍</div>
+      <div>
+        <div class="profile-label">Address</div>
+        <div class="profile-value">${school.address || '—'}</div>
+      </div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-icon">💬</div>
+      <div>
+        <div class="profile-label">WhatsApp / Phone</div>
+        <div class="profile-value"><a href="https://wa.me/${waNum}">${school.admin_phone || '—'}</a></div>
+      </div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-icon">📅</div>
+      <div>
+        <div class="profile-label">Term & Session</div>
+        <div class="profile-value">${school.term || '—'} · ${school.session || '—'}</div>
+      </div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-icon">🗓</div>
+      <div>
+        <div class="profile-label">Date Joined</div>
+        <div class="profile-value">${new Date(school.created_at).toLocaleDateString('en-NG', {day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-icon">⚡</div>
+      <div>
+        <div class="profile-label">Account Status</div>
+        <div class="profile-value" style="color:${school.status === 'suspended' ? '#fbbf24' : '#4ade80'}">${school.status === 'suspended' ? '🔶 Suspended' : '✅ Active'}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('profileModal').classList.add('open');
+}
+
+function closeProfile() {
+  document.getElementById('profileModal').classList.remove('open');
+}
+
+// Close modal on backdrop tap
+document.getElementById('profileModal').addEventListener('click', function(e) {
+  if (e.target === this) closeProfile();
+});
+
+// ===== SUSPEND / UNSUSPEND =====
+async function toggleSuspend(id, name, currentStatus) {
+  const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+  const msg = newStatus === 'suspended'
+    ? `Suspend "${name}"?\n\nThey will not be able to login until you lift the suspension.`
+    : `Lift suspension for "${name}"?\n\nThey will be able to login again immediately.`;
+
+  if (!confirm(msg)) return;
+
+  const { error } = await db.from('schools').update({ status: newStatus }).eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+
+  showToast(newStatus === 'suspended' ? `⚠ ${name} suspended` : `✓ ${name} reactivated`, newStatus === 'suspended' ? '#b45309' : '#16a34a');
+  loadPanel();
+}
+
+// ===== DELETE =====
+async function deleteSchool(id, name) {
+  if (!confirm(`Permanently delete "${name}"?\n\nThis removes the school, all students and all payments. This cannot be undone.`)) return;
+
+  try {
+    await db.from('payments').delete().eq('school_id', id);
+    await db.from('students').delete().eq('school_id', id);
+    const { error } = await db.from('schools').delete().eq('id', id);
+    if (error) throw error;
+    showToast(`🗑 ${name} deleted`, '#dc2626');
+    loadPanel();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// ===== LOAD PANEL =====
+async function loadPanel() {
   const el = document.getElementById('adminContent');
   el.innerHTML = '<div class="loader-wrap"><div class="spinner"></div>Loading schools...</div>';
 
   try {
-    // Load all three tables in parallel
-    const [schoolsRes, studentsRes, paymentsRes] = await Promise.all([
-      db.from('schools').select('id,name,address,admin_phone,created_at,default_fee,term,session').order('created_at', { ascending: false }),
-      db.from('students').select('school_id,fee'),
-      db.from('payments').select('school_id,amount')
+    const [schoolsRes, studentsRes] = await Promise.all([
+      db.from('schools').select('id,name,address,admin_phone,created_at,default_fee,term,session,status').order('created_at', { ascending: false }),
+      db.from('students').select('school_id')
     ]);
 
     if (schoolsRes.error) throw schoolsRes.error;
     if (studentsRes.error) throw studentsRes.error;
-    if (paymentsRes.error) throw paymentsRes.error;
 
     const schools = schoolsRes.data || [];
     const students = studentsRes.data || [];
-    const payments = paymentsRes.data || [];
 
-    // Build maps
-    const studentCountMap = {};
-    const expectedFeeMap = {};
-    students.forEach(s => {
-      studentCountMap[s.school_id] = (studentCountMap[s.school_id] || 0) + 1;
-      expectedFeeMap[s.school_id] = (expectedFeeMap[s.school_id] || 0) + (parseFloat(s.fee) || 0);
-    });
+    const countMap = {};
+    students.forEach(s => { countMap[s.school_id] = (countMap[s.school_id] || 0) + 1; });
 
-    const collectedMap = {};
-    payments.forEach(p => {
-      collectedMap[p.school_id] = (collectedMap[p.school_id] || 0) + (parseFloat(p.amount) || 0);
-    });
+    const totalStudents = students.length;
+    const activeSchools = schools.filter(s => s.status !== 'suspended').length;
+    const suspendedSchools = schools.filter(s => s.status === 'suspended').length;
 
-    // Platform totals
-    const totalStudents = Object.values(studentCountMap).reduce((a, b) => a + b, 0);
-    const totalCollected = Object.values(collectedMap).reduce((a, b) => a + b, 0);
-    const totalExpected = Object.values(expectedFeeMap).reduce((a, b) => a + b, 0);
-    const totalOutstanding = Math.max(0, totalExpected - totalCollected);
-
-    // Format naira
-    const fmt = n => '₦' + Number(n).toLocaleString('en-NG');
-
-    // Platform summary
     let html = `
       <div class="section-hdr">Platform Overview</div>
       <div class="summary-grid">
         <div class="summary-card blue">
           <div class="summary-val">${schools.length}</div>
-          <div class="summary-lbl">Schools</div>
+          <div class="summary-lbl">Total Schools</div>
         </div>
         <div class="summary-card green">
           <div class="summary-val">${totalStudents}</div>
-          <div class="summary-lbl">Students</div>
+          <div class="summary-lbl">Total Students</div>
         </div>
         <div class="summary-card green">
-          <div class="summary-val" style="font-size:18px">${fmt(totalCollected)}</div>
-          <div class="summary-lbl">Total Collected</div>
+          <div class="summary-val">${activeSchools}</div>
+          <div class="summary-lbl">Active</div>
         </div>
-        <div class="summary-card red">
-          <div class="summary-val" style="font-size:18px">${fmt(totalOutstanding)}</div>
-          <div class="summary-lbl">Outstanding</div>
+        <div class="summary-card blue" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25)">
+          <div class="summary-val" style="color:#fbbf24">${suspendedSchools}</div>
+          <div class="summary-lbl">Suspended</div>
         </div>
       </div>
-
       <div class="section-hdr">${schools.length} Registered School${schools.length !== 1 ? 's' : ''}</div>
     `;
 
@@ -428,45 +383,36 @@ async function loadAdminPanel() {
       html += '<div class="empty">No schools registered yet.</div>';
     } else {
       schools.forEach(school => {
-        const count = studentCountMap[school.id] || 0;
-        const collected = collectedMap[school.id] || 0;
-        const expected = expectedFeeMap[school.id] || 0;
-        const outstanding = Math.max(0, expected - collected);
-        const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 0;
-        const barColor = pct >= 75 ? '#22c55e' : pct >= 40 ? '#f59e0b' : '#ef4444';
-        const pctColor = pct >= 75 ? '#4ade80' : pct >= 40 ? '#fbbf24' : '#f87171';
-        const joined = new Date(school.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+        const count = countMap[school.id] || 0;
+        const isSuspended = school.status === 'suspended';
+        const joined = new Date(school.created_at).toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'});
+        const schoolJSON = JSON.stringify(school).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         html += `
-          <div class="school-card">
-            <div class="school-name">${school.name}</div>
+          <div class="school-card ${isSuspended ? 'suspended' : ''}">
+            <div class="school-card-top">
+              <button class="school-name-btn" onclick='openProfile(${JSON.stringify(school)})'>${school.name}</button>
+              <span class="status-badge ${isSuspended ? 'suspended' : 'active'}">${isSuspended ? '🔶 Suspended' : '✅ Active'}</span>
+            </div>
             <div class="school-meta">
               ${school.address || '—'}<br>
               📞 ${school.admin_phone || '—'} &nbsp;·&nbsp; ${school.term || ''} ${school.session || ''}
             </div>
-            <div class="stats-row">
-              <div class="stat-box neutral">
-                <div class="stat-val">${count}</div>
-                <div class="stat-lbl">Students</div>
-              </div>
-              <div class="stat-box g">
-                <div class="stat-val" style="font-size:12px">${fmt(collected)}</div>
-                <div class="stat-lbl">Collected</div>
-              </div>
-              <div class="stat-box r">
-                <div class="stat-val" style="font-size:12px">${fmt(outstanding)}</div>
-                <div class="stat-lbl">Owing</div>
-              </div>
+            <div class="school-student-count">
+              <strong>${count}</strong>
+              <span>Students Registered</span>
             </div>
-            <div class="prog-header">
-              <span>Fee Collection Rate</span>
-              <span class="prog-pct" style="color:${pctColor}">${pct}%</span>
+            <div class="school-footer">Joined ${joined} &nbsp;·&nbsp; Default fee ₦${Number(school.default_fee || 0).toLocaleString()}</div>
+            <div class="action-row">
+              <button class="action-btn ${isSuspended ? 'unsuspend' : 'suspend'}"
+                onclick="toggleSuspend('${school.id}', '${school.name.replace(/'/g,"\\'")}', '${school.status || 'active'}')">
+                ${isSuspended ? '✅ Lift Suspension' : '🔶 Suspend School'}
+              </button>
+              <button class="action-btn delete"
+                onclick="deleteSchool('${school.id}', '${school.name.replace(/'/g,"\\'")}')">
+                🗑 Delete School
+              </button>
             </div>
-            <div class="prog-track">
-              <div class="prog-fill" style="width:${pct}%;background:${barColor}"></div>
-            </div>
-            <div class="school-footer">Joined ${joined} &nbsp;·&nbsp; Default fee ${fmt(school.default_fee || 0)}</div>
-            <button onclick="confirmDeleteSchool('${school.id}', '${school.name}')" style="margin-top:12px;width:100%;padding:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:10px;font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">🗑 Delete School</button>
           </div>
         `;
       });
@@ -475,35 +421,9 @@ async function loadAdminPanel() {
     el.innerHTML = html;
 
   } catch (err) {
-    el.innerHTML = `<div class="empty" style="color:#f87171">Error loading data:<br>${err.message}</div>`;
+    el.innerHTML = `<div class="empty" style="color:#f87171">Error: ${err.message}</div>`;
   }
 }
 </script>
 </body>
 </html>
-<script>
-// Delete school feature - appended
-const _origDeleteSchool = window.confirmDeleteSchool;
-
-window.confirmDeleteSchool = function(id, name) {
-  const confirmed = confirm('Delete "' + name + '"?\n\nThis will permanently remove the school, all its students and payments. Cannot be undone.');
-  if (confirmed) window.deleteSchool(id, name);
-};
-
-window.deleteSchool = async function(id, name) {
-  try {
-    await db.from('payments').delete().eq('school_id', id);
-    await db.from('students').delete().eq('school_id', id);
-    const { error } = await db.from('schools').delete().eq('id', id);
-    if (error) throw error;
-    const toast = document.createElement('div');
-    toast.textContent = '✓ ' + name + ' deleted';
-    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;font-family:Plus Jakarta Sans,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-    loadAdminPanel();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-};
-</script>
