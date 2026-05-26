@@ -1391,6 +1391,7 @@ async function loginTeacher() {
 async function startTeacherApp(teacher) {
   $('authScreen').style.display = 'none';
   $('appScreen').style.display = 'block';
+  document.querySelector('.bottom-nav').style.display = 'flex';
   $('headerSchoolName').textContent = teacher.schools.name + ' — ' + teacher.class_assigned;
   $('dashSchoolName').textContent = teacher.schools.name;
   $('dashTerm').textContent = teacher.schools.term + ' • ' + teacher.schools.session;
@@ -1489,6 +1490,7 @@ function logout() {
   currentSchool = null; currentTeacher = null; userRole = 'admin';
   students = []; payments = []; results = []; teachers = [];
   $('appScreen').style.display = 'none';
+  document.querySelector('.bottom-nav').style.display = 'none';
   $('authScreen').style.display = 'flex';
   $('loginId').value = ''; $('loginPass').value = '';
   // Restore nav
