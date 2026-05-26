@@ -466,6 +466,7 @@ async function loadAdminPanel() {
               <div class="prog-fill" style="width:${pct}%;background:${barColor}"></div>
             </div>
             <div class="school-footer">Joined ${joined} &nbsp;·&nbsp; Default fee ${fmt(school.default_fee || 0)}</div>
+            <button onclick="confirmDeleteSchool('${school.id}', '${school.name}')" style="margin-top:12px;width:100%;padding:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:10px;font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">🗑 Delete School</button>
           </div>
         `;
       });
@@ -480,3 +481,29 @@ async function loadAdminPanel() {
 </script>
 </body>
 </html>
+<script>
+// Delete school feature - appended
+const _origDeleteSchool = window.confirmDeleteSchool;
+
+window.confirmDeleteSchool = function(id, name) {
+  const confirmed = confirm('Delete "' + name + '"?\n\nThis will permanently remove the school, all its students and payments. Cannot be undone.');
+  if (confirmed) window.deleteSchool(id, name);
+};
+
+window.deleteSchool = async function(id, name) {
+  try {
+    await db.from('payments').delete().eq('school_id', id);
+    await db.from('students').delete().eq('school_id', id);
+    const { error } = await db.from('schools').delete().eq('id', id);
+    if (error) throw error;
+    const toast = document.createElement('div');
+    toast.textContent = '✓ ' + name + ' deleted';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;font-family:Plus Jakarta Sans,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+    loadAdminPanel();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+</script>
