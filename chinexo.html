@@ -270,10 +270,12 @@ body {
   right: 0;
   background: white;
   border-top: 1px solid var(--border);
-  display: flex;
+  display: none;
   z-index: 100;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
 }
+
+#appScreen .bottom-nav { display: flex; }
 
 .nav-item {
   flex: 1;
@@ -1350,6 +1352,7 @@ async function loginSchool() {
       .or(`phone.eq.${identifier},email.eq.${identifier}`)
       .eq('password', password).single();
     if (error || !data) { showAuthError('loginError', 'Invalid credentials'); hideLoader(); return; }
+    if (data.status === 'suspended') { showAuthError('loginError', '⚠️ This account has been suspended. Contact Chinexo support: 09138077497 / 08036196105'); hideLoader(); return; }
     await startApp(data);
   } catch(e) { showAuthError('loginError', 'Connection error'); } finally { hideLoader(); }
 }
