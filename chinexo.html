@@ -760,6 +760,22 @@ body {
 .toast.success { background: #16a34a; }
 .toast.error { background: var(--red); }
 
+
+/* RECEIPT */
+.receipt-paper { background: white; border: 2px dashed #e5e7eb; border-radius: 16px; padding: 24px 20px; }
+.receipt-header { text-align: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e5e7eb; }
+.receipt-school { font-size: 18px; font-weight: 800; color: #0F1B3D; }
+.receipt-sub { font-size: 11px; color: #6B7280; margin-top: 2px; }
+.receipt-title { font-size: 12px; font-weight: 700; color: #2368FE; letter-spacing: 1px; text-transform: uppercase; margin-top: 8px; }
+.receipt-amount { text-align: center; background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 16px 0; }
+.receipt-amount-val { font-size: 28px; font-weight: 800; color: #16a34a; }
+.receipt-amount-lbl { font-size: 11px; color: #6B7280; margin-top: 2px; }
+.receipt-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+.receipt-row:last-child { border-bottom: none; }
+.receipt-row-label { color: #6B7280; }
+.receipt-row-val { font-weight: 700; color: #0F1B3D; text-align: right; }
+.receipt-footer { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e5e7eb; font-size: 11px; color: #9CA3AF; line-height: 1.6; }
+
 /* LOADER */
 .loader {
   position: fixed;
@@ -1674,10 +1690,13 @@ function renderPayments() {
   }
   $('payHistory').innerHTML = recent.map(p => {
     const s = students.find(st => st.id === p.student_id);
-    return `<div class="pay-item">
-      <div><div class="pay-name">${s?.name||'Unknown'}</div><div class="pay-meta">${p.payment_date||''} · ${p.method||'Cash'}</div></div>
-      <div class="pay-amount">${fmt(p.amount)}</div>
-    </div>`;
+    return `<div class="pay-item" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="pay-name">${s?.name||'Unknown'}</div><div class="pay-meta">${p.payment_date||''} · ${p.method||'Cash'}</div></div>
+        <div class="pay-amount">${fmt(p.amount)}</div>
+      </div>
+      <button onclick="generateReceipt('${p.id}')" style="width:100%;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">🧾 Generate Receipt</button>
+    </div>`; 
   }).join('');
 }
 
@@ -2139,7 +2158,8 @@ function generateReportCard() {
     <div class="disclaimer">Any alteration whatsoever on this document renders it invalid</div>
     <div style="text-align:center;font-size:9px;color:#999;margin-top:4px">Powered by Chinexo — Connect • Manage • Empower</div>
   </div>
-  </body></html>`;
+  
+</body></html>`;
 
   const win = window.open('', '_blank');
   win.document.write(rcHTML);
@@ -2513,8 +2533,67 @@ async function uploadBulkStudents() {
   } finally { hideLoader(); }
 }
 
+
+// ===== RECEIPT =====
+let currentReceiptText = '';
+
+function generateReceipt(paymentId) {
+  const p = payments.find(x => x.id === paymentId);
+  if (!p) return;
+  const s = students.find(st => st.id === p.student_id);
+  const school = currentSchool;
+  const receiptNo = 'RCP-' + paymentId.substring(0, 8).toUpperCase();
+  const date = new Date(p.payment_date || p.created_at).toLocaleDateString('en-NG', {day:'numeric',month:'long',year:'numeric'});
+
+  currentReceiptText = `OFFICIAL RECEIPT - ${school.name}
+Receipt No: ${receiptNo}
+Date: ${date}
+Student: ${s?.name || 'Unknown'}
+Class: ${s?.class || ''}
+Amount Paid: ${fmt(p.amount)}
+Payment Method: ${p.method || 'Cash'}
+Term: ${school.term || ''} ${school.session || ''}
+Powered by Chinexo`;
+
+  document.getElementById('receiptContent').innerHTML = `
+    <div class="receipt-paper">
+      <div class="receipt-header">
+        ${school.logo_url ? `<img src="${school.logo_url}" style="height:56px;object-fit:contain;margin-bottom:8px;border-radius:8px">` : ''}
+        <div class="receipt-school">${school.name}</div>
+        <div class="receipt-sub">${school.address || ''}</div>
+        <div class="receipt-title">Official Payment Receipt</div>
+      </div>
+      <div class="receipt-amount">
+        <div class="receipt-amount-val">${fmt(p.amount)}</div>
+        <div class="receipt-amount-lbl">Amount Paid</div>
+      </div>
+      <div class="receipt-row"><span class="receipt-row-label">Receipt No.</span><span class="receipt-row-val">${receiptNo}</span></div>
+      <div class="receipt-row"><span class="receipt-row-label">Student</span><span class="receipt-row-val">${s?.name || 'Unknown'}</span></div>
+      <div class="receipt-row"><span class="receipt-row-label">Class</span><span class="receipt-row-val">${s?.class || '—'}</span></div>
+      <div class="receipt-row"><span class="receipt-row-label">Payment Method</span><span class="receipt-row-val">${p.method || 'Cash'}</span></div>
+      <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${date}</span></div>
+      <div class="receipt-row"><span class="receipt-row-label">Term</span><span class="receipt-row-val">${school.term || ''} ${school.session || ''}</span></div>
+      <div class="receipt-footer">
+        This is an official receipt issued by ${school.name}<br>
+        Powered by Chinexo · ${school.admin_phone || ''}
+      </div>
+    </div>
+  `;
+  document.getElementById('receiptModal').classList.add('open');
+}
+
+function closeReceipt() {
+  document.getElementById('receiptModal').classList.remove('open');
+}
+
+function shareReceipt() {
+  const text = encodeURIComponent(currentReceiptText);
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
 // ===== INIT =====
 $('payDate').value = today();
 </script>
+
 </body>
 </html>
