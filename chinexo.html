@@ -1367,6 +1367,8 @@ async function loginSchool() {
       .eq('password', password).single();
     if (error || !data) { showAuthError('loginError', 'Invalid credentials'); hideLoader(); return; }
     if (data.status === 'suspended') { showAuthError('loginError', '⚠️ This account has been suspended. Contact Chinexo support: 09138077497 / 08036196105'); hideLoader(); return; }
+    if (data.subscription_status === 'expired') { showAuthError('loginError', '⚠️ Your subscription has expired. Please renew to continue. Contact Chinexo: 09138077497 / 08036196105'); hideLoader(); return; }
+    if (data.subscription_expires && new Date(data.subscription_expires) < new Date()) { showAuthError('loginError', '⚠️ Your subscription has expired. Please renew to continue. Contact Chinexo: 09138077497 / 08036196105'); hideLoader(); return; }
     await startApp(data);
   } catch(e) { showAuthError('loginError', 'Connection error'); } finally { hideLoader(); }
 }
