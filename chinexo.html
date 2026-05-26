@@ -1462,6 +1462,7 @@ async function startApp(school) {
   currentSchool = school;
   $('authScreen').style.display = 'none';
   $('appScreen').style.display = 'block';
+  document.querySelector('.bottom-nav').style.display = 'flex';
   $('headerSchoolName').textContent = school.name;
   $('dashSchoolName').textContent = school.name;
   $('dashTerm').textContent = school.term + ' • ' + school.session;
@@ -1697,7 +1698,7 @@ function renderPayments() {
         <div><div class="pay-name">${s?.name||'Unknown'}</div><div class="pay-meta">${p.payment_date||''} · ${p.method||'Cash'}</div></div>
         <div class="pay-amount">${fmt(p.amount)}</div>
       </div>
-      <button onclick="generateReceipt('${p.id}')" style="width:100%;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">🧾 Generate Receipt</button>
+      ${userRole === 'admin' ? `<button onclick="generateReceipt('${p.id}')" style="width:100%;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">🧾 Generate Receipt</button>` : ''}
     </div>`; 
   }).join('');
 }
