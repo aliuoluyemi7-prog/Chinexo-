@@ -32,6 +32,9 @@ body {
 }
 
 /* ===== AUTH SCREEN ===== */
+#authScreen ~ .bottom-nav,
+#authScreen + * .bottom-nav { display: none !important; }
+
 #authScreen {
   min-height: 100vh;
   background: var(--navy);
@@ -270,12 +273,10 @@ body {
   right: 0;
   background: white;
   border-top: 1px solid var(--border);
-  display: none;
+  display: flex;
   z-index: 100;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
 }
-
-#appScreen .bottom-nav { display: flex; }
 
 .nav-item {
   flex: 1;
@@ -1391,7 +1392,6 @@ async function loginTeacher() {
 async function startTeacherApp(teacher) {
   $('authScreen').style.display = 'none';
   $('appScreen').style.display = 'block';
-  document.querySelector('.bottom-nav').style.display = 'flex';
   $('headerSchoolName').textContent = teacher.schools.name + ' — ' + teacher.class_assigned;
   $('dashSchoolName').textContent = teacher.schools.name;
   $('dashTerm').textContent = teacher.schools.term + ' • ' + teacher.schools.session;
@@ -1462,7 +1462,6 @@ async function startApp(school) {
   currentSchool = school;
   $('authScreen').style.display = 'none';
   $('appScreen').style.display = 'block';
-  document.querySelector('.bottom-nav').style.display = 'flex';
   $('headerSchoolName').textContent = school.name;
   $('dashSchoolName').textContent = school.name;
   $('dashTerm').textContent = school.term + ' • ' + school.session;
@@ -1491,7 +1490,6 @@ function logout() {
   currentSchool = null; currentTeacher = null; userRole = 'admin';
   students = []; payments = []; results = []; teachers = [];
   $('appScreen').style.display = 'none';
-  document.querySelector('.bottom-nav').style.display = 'none';
   $('authScreen').style.display = 'flex';
   $('loginId').value = ''; $('loginPass').value = '';
   // Restore nav
