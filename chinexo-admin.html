@@ -333,13 +333,32 @@ async function deleteSchool(id, name) {
 }
 
 // ===== LOAD PANEL =====
+async function setSubscription(schoolId, status) {
+  const expires = status === 'active'
+    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    : null;
+  const { error } = await db.from('schools').update({
+    subscription_status: status,
+    subscription_expires: expires
+  }).eq('id', schoolId);
+  if (error) { alert('Error: ' + error.message); return; }
+  const msg = status === 'active' ? '✅ Subscription activated (30 days)' :
+              status === 'expired' ? '❌ Subscription expired' : '⏳ Set to trial';
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0F1B3D;color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;font-family:Plus Jakarta Sans,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+  loadPanel();
+}
+
 async function loadPanel() {
   const el = document.getElementById('adminContent');
   el.innerHTML = '<div class="loader-wrap"><div class="spinner"></div>Loading schools...</div>';
 
   try {
     const [schoolsRes, studentsRes] = await Promise.all([
-      db.from('schools').select('id,name,address,admin_phone,created_at,default_fee,term,session,status').order('created_at', { ascending: false }),
+      db.from('schools').select('id,name,address,admin_phone,created_at,default_fee,term,session,status,subscription_status,subscription_expires,subscription_plan').order('created_at', { ascending: false }),
       db.from('students').select('school_id')
     ]);
 
@@ -377,6 +396,16 @@ async function loadPanel() {
         </div>
       </div>
       <div class="section-hdr">${schools.length} Registered School${schools.length !== 1 ? 's' : ''}</div>
+      <div class="summary-grid" style="margin-bottom:24px">
+        <div class="summary-card green">
+          <div class="summary-val">${schools.filter(s => s.subscription_status === 'active').length}</div>
+          <div class="summary-lbl">Paying</div>
+        </div>
+        <div class="summary-card blue" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.25)">
+          <div class="summary-val" style="color:#f87171">${schools.filter(s => !s.subscription_status || s.subscription_status === 'trial' || s.subscription_status === 'expired').length}</div>
+          <div class="summary-lbl">Not Paying</div>
+        </div>
+      </div>
     `;
 
     if (schools.length === 0) {
@@ -403,6 +432,32 @@ async function loadPanel() {
               <span>Students Registered</span>
             </div>
             <div class="school-footer">Joined ${joined} &nbsp;·&nbsp; Default fee ₦${Number(school.default_fee || 0).toLocaleString()}</div>
+            <div style="margin:10px 0;padding:10px;border-radius:10px;background:${
+              school.subscription_status === 'active' ? 'rgba(34,197,94,0.1)' :
+              school.subscription_status === 'expired' ? 'rgba(239,68,68,0.1)' :
+              'rgba(245,158,11,0.1)'
+            };border:1px solid ${
+              school.subscription_status === 'active' ? 'rgba(34,197,94,0.3)' :
+              school.subscription_status === 'expired' ? 'rgba(239,68,68,0.3)' :
+              'rgba(245,158,11,0.3)'
+            }">
+              <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px">SUBSCRIPTION</div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:13px;font-weight:700;color:${
+                  school.subscription_status === 'active' ? '#4ade80' :
+                  school.subscription_status === 'expired' ? '#f87171' : '#fbbf24'
+                }">${
+                  school.subscription_status === 'active' ? '✅ Active' :
+                  school.subscription_status === 'expired' ? '❌ Expired' : '⏳ Trial'
+                }</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.4)">${school.subscription_expires ? 'Expires: ' + new Date(school.subscription_expires).toLocaleDateString('en-NG') : 'No expiry set'}</span>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <button onclick="setSubscription('${school.id}', 'active')" style="flex:1;padding:6px;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.3);color:#4ade80;border-radius:8px;font-size:11px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">✅ Activate</button>
+                <button onclick="setSubscription('${school.id}', 'trial')" style="flex:1;padding:6px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;border-radius:8px;font-size:11px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">⏳ Trial</button>
+                <button onclick="setSubscription('${school.id}', 'expired')" style="flex:1;padding:6px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;font-size:11px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;">❌ Expire</button>
+              </div>
+            </div>
             <div class="action-row">
               <button class="action-btn ${isSuspended ? 'unsuspend' : 'suspend'}"
                 onclick="toggleSuspend('${school.id}', '${school.name.replace(/'/g,"\\'")}', '${school.status || 'active'}')">
