@@ -2594,5 +2594,15 @@ function shareReceipt() {
 $('payDate').value = today();
 </script>
 
+<!-- RECEIPT MODAL -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="modal" style="max-height:92vh">
+    <div class="modal-handle"></div>
+    <div id="receiptContent"></div>
+    <button onclick="shareReceipt()" style="width:100%;padding:14px;background:#25D366;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-top:16px;">📲 Share on WhatsApp</button>
+    <button onclick="closeReceipt()" style="width:100%;padding:12px;background:#f3f4f6;color:#0F1B3D;border:none;border-radius:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-top:8px;">Close</button>
+  </div>
+</div>
+
 </body>
 </html>
