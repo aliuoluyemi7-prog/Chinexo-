@@ -32,9 +32,6 @@ body {
 }
 
 /* ===== AUTH SCREEN ===== */
-#authScreen ~ .bottom-nav,
-#authScreen + * .bottom-nav { display: none !important; }
-
 #authScreen {
   min-height: 100vh;
   background: var(--navy);
@@ -1462,6 +1459,7 @@ async function startApp(school) {
   currentSchool = school;
   $('authScreen').style.display = 'none';
   $('appScreen').style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.style.display = 'flex');
   $('headerSchoolName').textContent = school.name;
   $('dashSchoolName').textContent = school.name;
   $('dashTerm').textContent = school.term + ' • ' + school.session;
