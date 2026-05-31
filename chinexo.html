@@ -570,6 +570,9 @@ body {
       <label class="auth-label">Password</label>
       <input class="auth-input" type="password" id="loginPass" placeholder="Enter password">
       <button class="auth-btn" onclick="loginSchool()">Login →</button>
+      <div style="text-align:center;margin-top:12px">
+        <span style="font-size:12px;color:rgba(255,255,255,0.4);cursor:pointer" onclick="forgotPassword()">Forgot password?</span>
+      </div>
       <div class="auth-error" id="loginError"></div>
     </div>
 
@@ -585,6 +588,9 @@ body {
 
     <!-- REGISTER -->
     <div id="registerForm" style="display:none">
+      <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6">
+        📧 Use an email address you can access — you will need it to log in and reset your password.
+      </div>
       <label class="auth-label">School Name</label>
       <input class="auth-input" type="text" id="regSchoolName" placeholder="e.g. Wellspring Academy">
       <label class="auth-label">School Address</label>
@@ -1061,6 +1067,25 @@ function switchAuth(tab) {
   document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
   document.getElementById('teacherForm').style.display = tab === 'teacher' ? '' : 'none';
   document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const errEl = document.getElementById('loginError');
+  if (!email) {
+    errEl.textContent = 'Enter your email address first.';
+    errEl.style.display = 'block';
+    return;
+  }
+  showLoader();
+  const { error } = await db.auth.resetPasswordForEmail(email);
+  hideLoader();
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  toast('Password reset email sent! Check your inbox.', 'success');
 }
 
 async function loginSchool() {
