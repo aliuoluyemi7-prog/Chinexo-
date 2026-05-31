@@ -859,7 +859,10 @@ body {
   <div class="modal">
     <div class="modal-handle"></div>
     <div id="receiptContent"></div>
-    <button class="btn outline full" style="margin-top:12px" onclick="closeModal('receiptModal')">Close</button>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn primary full" onclick="printReceipt()">🖨️ Print / Share</button>
+      <button class="btn outline full" onclick="closeModal('receiptModal')">Close</button>
+    </div>
   </div>
 </div>
 
@@ -1486,6 +1489,7 @@ function openStudentDetail(id) {
       <button class="btn outline" onclick="openEditStudent('${s.id}');closeModal('studentDetailModal')">Edit</button>
       ${s.parent_phone ? `<a class="wa-btn" href="https://wa.me/234${s.parent_phone.replace(/^0/,'')}" target="_blank">📱 WhatsApp</a>` : ''}
       <button class="btn danger small" onclick="deleteStudent('${s.id}')">Delete</button>
+      <button class="btn amber small" onclick="printReportCard('${s.id}')">🖨️ Report Card</button>
     </div>`;
 
   document.getElementById('studentDetailContent').innerHTML = html;
@@ -1920,6 +1924,157 @@ async function updateTerm() {
   closeModal('termModal');
   renderSettings();
   loadDashboard();
+}
+
+// ===== PRINT FUNCTIONS =====
+function printReceipt() {
+  const receiptHTML = document.getElementById('receiptContent').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Receipt - Chinexo</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: white; }
+        .modal-title { font-size: 20px; font-weight: 800; color: #0F1B3D; margin-bottom: 16px; }
+        .receipt-paper { background: white; border: 2px dashed #e5e7eb; border-radius: 16px; padding: 24px 20px; }
+        .receipt-header { text-align: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e5e7eb; }
+        .receipt-school { font-size: 18px; font-weight: 800; color: #0F1B3D; }
+        .receipt-sub { font-size: 11px; color: #6B7280; margin-top: 2px; }
+        .receipt-title { font-size: 12px; font-weight: 700; color: #2368FE; letter-spacing: 1px; text-transform: uppercase; margin-top: 8px; }
+        .receipt-amount { text-align: center; background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 16px 0; }
+        .receipt-amount-val { font-size: 28px; font-weight: 800; color: #16a34a; }
+        .receipt-amount-lbl { font-size: 11px; color: #6B7280; margin-top: 2px; }
+        .receipt-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+        .receipt-row:last-child { border-bottom: none; }
+        .receipt-row-label { color: #6B7280; }
+        .receipt-row-val { font-weight: 700; color: #0F1B3D; text-align: right; }
+        .receipt-footer { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e5e7eb; font-size: 11px; color: #9CA3AF; line-height: 1.6; }
+        @media print { body { padding: 0; } }
+      </style>
+    </head>
+    <body>
+      ${receiptHTML}
+      <script>window.onload = function(){ window.print(); }<\/script>
+    </body>
+    </html>
+  `);
+  win.document.close();
+}
+
+function printReportCard(studentId) {
+  const student = allStudents.find(s => s.id === studentId);
+  if (!student) return;
+  const results = allResults.filter(r => r.student_id === studentId);
+  if (results.length === 0) { toast('No results to print', 'error'); return; }
+  
+  const avg = Math.round(results.reduce((sum, r) => sum + (r.ca_score||0) + (r.exam_score||0), 0) / results.length);
+  
+  let rows = results.map(r => {
+    const total = (r.ca_score||0) + (r.exam_score||0);
+    const grade = total >= 75 ? 'A' : total >= 65 ? 'B' : total >= 55 ? 'C' : total >= 45 ? 'D' : total >= 40 ? 'E' : 'F';
+    const remark = total >= 75 ? 'Excellent' : total >= 65 ? 'Very Good' : total >= 55 ? 'Good' : total >= 45 ? 'Pass' : total >= 40 ? 'Fair' : 'Fail';
+    return `<tr>
+      <td>${r.subject}</td>
+      <td style="text-align:center">${r.ca_score||0}</td>
+      <td style="text-align:center">${r.exam_score||0}</td>
+      <td style="text-align:center;font-weight:bold">${total}</td>
+      <td style="text-align:center;font-weight:bold">${grade}</td>
+      <td style="text-align:center">${remark}</td>
+    </tr>`;
+  }).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Report Card - ${student.name}</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: white; color: #0F1B3D; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #0F1B3D; padding-bottom: 16px; }
+        .school-name { font-size: 22px; font-weight: 800; color: #0F1B3D; }
+        .school-address { font-size: 12px; color: #6B7280; margin-top: 4px; }
+        .report-title { font-size: 14px; font-weight: 700; color: #2368FE; letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; }
+        .student-info { display: flex; justify-content: space-between; margin: 16px 0; font-size: 13px; }
+        .info-item { margin-bottom: 6px; }
+        .info-label { color: #6B7280; }
+        .info-val { font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+        th { background: #0F1B3D; color: white; padding: 8px; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #e5e7eb; }
+        tr:nth-child(even) { background: #f9fafb; }
+        .summary { margin-top: 16px; display: flex; gap: 20px; }
+        .summary-box { flex: 1; background: #f3f5f9; border-radius: 8px; padding: 12px; text-align: center; }
+        .summary-val { font-size: 24px; font-weight: 800; color: #0F1B3D; }
+        .summary-lbl { font-size: 11px; color: #6B7280; margin-top: 4px; }
+        .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; }
+        .signature { text-align: center; border-top: 1px solid #0F1B3D; padding-top: 8px; width: 150px; }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="school-name">${currentSchool.name}</div>
+        <div class="school-address">${currentSchool.address || ''}</div>
+        ${currentSchool.motto ? `<div style="font-size:11px;font-style:italic;color:#6B7280;margin-top:4px">"${currentSchool.motto}"</div>` : ''}
+        <div class="report-title">Student Report Card</div>
+      </div>
+      <div class="student-info">
+        <div>
+          <div class="info-item"><span class="info-label">Name: </span><span class="info-val">${student.name}</span></div>
+          <div class="info-item"><span class="info-label">Class: </span><span class="info-val">${student.student_class || '—'}</span></div>
+          <div class="info-item"><span class="info-label">Sex: </span><span class="info-val">${student.sex || '—'}</span></div>
+        </div>
+        <div>
+          <div class="info-item"><span class="info-label">Term: </span><span class="info-val">${currentSchool.current_term}</span></div>
+          <div class="info-item"><span class="info-label">Session: </span><span class="info-val">${currentSchool.current_session}</span></div>
+          <div class="info-item"><span class="info-label">Subjects: </span><span class="info-val">${results.length}</span></div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th style="text-align:center">CA (40)</th>
+            <th style="text-align:center">Exam (60)</th>
+            <th style="text-align:center">Total (100)</th>
+            <th style="text-align:center">Grade</th>
+            <th style="text-align:center">Remark</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="summary">
+        <div class="summary-box">
+          <div class="summary-val">${results.length}</div>
+          <div class="summary-lbl">Subjects</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-val">${avg}</div>
+          <div class="summary-lbl">Average</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-val">${avg >= 75 ? 'A' : avg >= 65 ? 'B' : avg >= 55 ? 'C' : avg >= 45 ? 'D' : avg >= 40 ? 'E' : 'F'}</div>
+          <div class="summary-lbl">Grade</div>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="signature">Class Teacher</div>
+        <div class="signature">Head Teacher</div>
+        <div class="signature">Principal</div>
+      </div>
+      <script>window.onload = function(){ window.print(); }<\/script>
+    </body>
+    </html>
+  `);
+  win.document.close();
 }
 
 // ===== AUTO LOGIN (session persist) =====
