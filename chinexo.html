@@ -941,7 +941,17 @@ body {
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Configure Fees</div>
-    <div class="modal-sub">Set expected amounts per fee type</div>
+    <div class="modal-sub">Set amounts per class. Leave blank to use default.</div>
+    <label class="form-label">Select Class</label>
+    <select class="form-select" id="feeClassSelect" onchange="loadClassFeeInputs()">
+      <option value="default">Default (All Classes)</option>
+      <option value="JSS 1">JSS 1</option>
+      <option value="JSS 2">JSS 2</option>
+      <option value="JSS 3">JSS 3</option>
+      <option value="SSS 1">SSS 1</option>
+      <option value="SSS 2">SSS 2</option>
+      <option value="SSS 3">SSS 3</option>
+    </select>
     <label class="form-label">School Fees (₦)</label>
     <input class="form-input" type="number" id="feeSchoolFees" placeholder="0">
     <label class="form-label">Uniform (₦)</label>
@@ -987,7 +997,7 @@ let allStudents = [];
 let allPayments = [];
 let allResults = [];
 let schoolSubjects = [];
-let feeConfig = { school_fees: 0, uniform: 0, books: 0 };
+let feeConfig = { default: { school_fees: 0, uniform: 0, books: 0 } };
 let activeClassFilter = 'All';
 let activeStatusFilter = 'all';
 let activePayClass = 'All';
@@ -1174,7 +1184,13 @@ async function loadSchoolData() {
   }
   currentSchool = school;
   schoolSubjects = school.subjects || [];
-  feeConfig = school.fee_config || { school_fees: 0, uniform: 0, books: 0 };
+  const rawFee = school.fee_config || {};
+  // Support both old flat format and new per-class format
+  if (rawFee.school_fees !== undefined) {
+    feeConfig = { default: rawFee };
+  } else {
+    feeConfig = Object.keys(rawFee).length ? rawFee : { default: { school_fees: 0, uniform: 0, books: 0 } };
+  }
   await loadStudents();
   await loadPayments();
   await loadResults();
@@ -1227,7 +1243,7 @@ function loadDashboard() {
   const feeMap = getStudentFeeMap();
   let paid = 0, unpaid = 0;
   let totalCollected = 0;
-  const totalExpected = total * (feeConfig.school_fees + feeConfig.uniform + feeConfig.books);
+  const totalExpected = allStudents.reduce((sum, s) => sum + getClassFee(s.student_class), 0);
 
   Object.values(feeMap).forEach(s => {
     totalCollected += s.paid;
@@ -1252,7 +1268,10 @@ function loadDashboard() {
   const feeKeys = ['school_fees','uniform','books'];
   let bHTML = '';
   feeTypes.forEach((ft, i) => {
-    const expected = total * (feeConfig[feeKeys[i]] || 0);
+    const expected = allStudents.reduce((sum, s) => {
+      const cf = getClassFeeBreakdown(s.student_class);
+      return sum + (cf[feeKeys[i]] || 0);
+    }, 0);
     const collected = allPayments.filter(p => p.fee_type === ft).reduce((s, p) => s + (p.amount || 0), 0);
     const p = expected > 0 ? Math.round((collected / expected) * 100) : 0;
     bHTML += `<div style="margin-bottom:12px">
@@ -1286,10 +1305,21 @@ function loadDashboard() {
 }
 
 // ===== FEE CALCULATION =====
+function getClassFee(studentClass) {
+  const cls = studentClass || 'default';
+  const config = feeConfig[cls] || feeConfig['default'] || { school_fees: 0, uniform: 0, books: 0 };
+  return (config.school_fees || 0) + (config.uniform || 0) + (config.books || 0);
+}
+
+function getClassFeeBreakdown(studentClass) {
+  const cls = studentClass || 'default';
+  return feeConfig[cls] || feeConfig['default'] || { school_fees: 0, uniform: 0, books: 0 };
+}
+
 function getStudentFeeMap() {
   const map = {};
   allStudents.forEach(s => {
-    map[s.id] = { paid: 0, expected: feeConfig.school_fees + feeConfig.uniform + feeConfig.books };
+    map[s.id] = { paid: 0, expected: getClassFee(s.student_class) };
   });
   allPayments.forEach(p => {
     if (map[p.student_id]) map[p.student_id].paid += (p.amount || 0);
@@ -1305,12 +1335,14 @@ function getPaymentStatus(paid, expected) {
 }
 
 function getStudentFeeBreakdown(studentId) {
+  const student = allStudents.find(s => s.id === studentId);
+  const classFee = getClassFeeBreakdown(student ? student.student_class : 'default');
   const types = ['School Fees','Uniform','Books'];
   const keys = ['school_fees','uniform','books'];
   return types.map((ft, i) => {
     const paid = allPayments.filter(p => p.student_id === studentId && p.fee_type === ft)
       .reduce((s, p) => s + (p.amount || 0), 0);
-    return { type: ft, paid, expected: feeConfig[keys[i]] || 0 };
+    return { type: ft, paid, expected: classFee[keys[i]] || 0 };
   });
 }
 
@@ -1767,15 +1799,19 @@ function renderSettings() {
   renderSubjectList();
 
   // Fee config
-  document.getElementById('feeConfigList').innerHTML = `
-    <div class="info-row"><span class="info-label">School Fees</span><span class="info-val">${formatMoney(feeConfig.school_fees)}</span></div>
-    <div class="info-row"><span class="info-label">Uniform</span><span class="info-val">${formatMoney(feeConfig.uniform)}</span></div>
-    <div class="info-row"><span class="info-label">Books</span><span class="info-val">${formatMoney(feeConfig.books)}</span></div>
-    <div class="info-row"><span class="info-label">Total Per Student</span><span class="info-val" style="color:var(--blue)">${formatMoney(feeConfig.school_fees + feeConfig.uniform + feeConfig.books)}</span></div>`;
-
-  document.getElementById('feeSchoolFees').value = feeConfig.school_fees || '';
-  document.getElementById('feeUniform').value = feeConfig.uniform || '';
-  document.getElementById('feeBooks').value = feeConfig.books || '';
+  const classes = ['default','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+  let feeHTML = '';
+  classes.forEach(cls => {
+    const cf = feeConfig[cls];
+    if (cf && (cf.school_fees || cf.uniform || cf.books)) {
+      const total = (cf.school_fees||0) + (cf.uniform||0) + (cf.books||0);
+      feeHTML += `<div class="info-row"><span class="info-label">${cls === 'default' ? 'Default' : cls}</span><span class="info-val" style="color:var(--blue)">${formatMoney(total)}/term</span></div>`;
+    }
+  });
+  document.getElementById('feeConfigList').innerHTML = feeHTML || '<div style="font-size:13px;color:var(--grey);text-align:center;padding:12px">No fees configured yet</div>';
+  document.getElementById('feeSchoolFees').value = '';
+  document.getElementById('feeUniform').value = '';
+  document.getElementById('feeBooks').value = '';
 
   // Term
   document.getElementById('termDisplay').innerHTML = `
@@ -1828,8 +1864,17 @@ async function saveSubjects() {
   currentSchool.subjects = schoolSubjects;
 }
 
+function loadClassFeeInputs() {
+  const cls = document.getElementById('feeClassSelect').value;
+  const config = feeConfig[cls] || { school_fees: 0, uniform: 0, books: 0 };
+  document.getElementById('feeSchoolFees').value = config.school_fees || '';
+  document.getElementById('feeUniform').value = config.uniform || '';
+  document.getElementById('feeBooks').value = config.books || '';
+}
+
 async function saveFeeConfig() {
-  feeConfig = {
+  const cls = document.getElementById('feeClassSelect').value;
+  feeConfig[cls] = {
     school_fees: parseFloat(document.getElementById('feeSchoolFees').value) || 0,
     uniform: parseFloat(document.getElementById('feeUniform').value) || 0,
     books: parseFloat(document.getElementById('feeBooks').value) || 0
@@ -1838,7 +1883,7 @@ async function saveFeeConfig() {
   await db.from('schools').update({ fee_config: feeConfig }).eq('id', currentSchool.id);
   currentSchool.fee_config = feeConfig;
   hideLoader();
-  toast('Fee config saved!', 'success');
+  toast('Fee config saved for ' + (cls === 'default' ? 'all classes' : cls) + '!', 'success');
   closeModal('feeConfigModal');
   renderSettings();
   loadDashboard();
