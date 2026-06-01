@@ -1966,114 +1966,198 @@ function printReceipt() {
   win.document.close();
 }
 
+function getWAECGrade(total) {
+  if (total >= 75) return { grade: 'A1', color: '#16a34a', remark: 'Excellent' };
+  if (total >= 70) return { grade: 'B2', color: '#2563eb', remark: 'Very Good' };
+  if (total >= 65) return { grade: 'B3', color: '#2563eb', remark: 'Good' };
+  if (total >= 60) return { grade: 'C4', color: '#d97706', remark: 'Credit' };
+  if (total >= 55) return { grade: 'C5', color: '#d97706', remark: 'Credit' };
+  if (total >= 50) return { grade: 'C6', color: '#d97706', remark: 'Credit' };
+  if (total >= 45) return { grade: 'D7', color: '#ea580c', remark: 'Pass' };
+  if (total >= 40) return { grade: 'E8', color: '#9333ea', remark: 'Pass' };
+  return { grade: 'F9', color: '#dc2626', remark: 'Fail' };
+}
+
 function printReportCard(studentId) {
   const student = allStudents.find(s => s.id === studentId);
   if (!student) return;
   const results = allResults.filter(r => r.student_id === studentId);
   if (results.length === 0) { toast('No results to print', 'error'); return; }
-  
-  const avg = Math.round(results.reduce((sum, r) => sum + (r.ca_score||0) + (r.exam_score||0), 0) / results.length);
-  
-  let rows = results.map(r => {
+
+  const totalScore = results.reduce((sum, r) => sum + (r.ca_score||0) + (r.exam_score||0), 0);
+  const avg = results.length > 0 ? (totalScore / results.length).toFixed(1) : '0.0';
+  const totalObtainable = results.length * 100;
+  const totalCA = results.reduce((sum, r) => sum + (r.ca_score||0), 0);
+  const totalExam = results.reduce((sum, r) => sum + (r.exam_score||0), 0);
+
+  const classmates = allStudents.filter(s => s.student_class === student.student_class);
+  const classScores = classmates.map(s => {
+    const sr = allResults.filter(r => r.student_id === s.id);
+    const st = sr.reduce((sum, r) => sum + (r.ca_score||0) + (r.exam_score||0), 0);
+    return { id: s.id, avg: sr.length > 0 ? st / sr.length : 0 };
+  }).sort((a, b) => b.avg - a.avg);
+  const pos = classScores.findIndex(s => s.id === studentId) + 1;
+  const posStr = pos === 1 ? '1st' : pos === 2 ? '2nd' : pos === 3 ? '3rd' : pos + 'th';
+  const classAvg = classScores.length > 0 ? (classScores.reduce((a, b) => a + b.avg, 0) / classScores.length).toFixed(1) : avg;
+  const promoted = parseFloat(avg) >= 40;
+
+  const affective = [
+    ['Punctuality','Good (3)'],['Neatness','Excellent (5)'],['Obedience','Good (3)'],
+    ['Diligence','Very Good (4)'],['Self-Control','Very Good (4)'],['Respect','Excellent (5)'],
+    ['Leadership','Good (3)'],['Perseverance','Very Good (4)']
+  ];
+  const psychomotor = [
+    ['Drawing','Very Good (4)'],['Handwriting','Excellent (5)'],['Sport & Games','Very Good (4)'],
+    ['Painting','Good (3)'],['Swimming','Good (3)'],['Handling of Tools','Excellent (5)']
+  ];
+
+  let sn = 0;
+  const rows = results.map(r => {
+    sn++;
     const total = (r.ca_score||0) + (r.exam_score||0);
-    const grade = total >= 75 ? 'A' : total >= 65 ? 'B' : total >= 55 ? 'C' : total >= 45 ? 'D' : total >= 40 ? 'E' : 'F';
-    const remark = total >= 75 ? 'Excellent' : total >= 65 ? 'Very Good' : total >= 55 ? 'Good' : total >= 45 ? 'Pass' : total >= 40 ? 'Fair' : 'Fail';
-    return `<tr>
-      <td>${r.subject}</td>
-      <td style="text-align:center">${r.ca_score||0}</td>
-      <td style="text-align:center">${r.exam_score||0}</td>
-      <td style="text-align:center;font-weight:bold">${total}</td>
-      <td style="text-align:center;font-weight:bold">${grade}</td>
-      <td style="text-align:center">${remark}</td>
+    const g = getWAECGrade(total);
+    return `<tr style="border-bottom:1px solid #ddd">
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center">${sn}</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;font-weight:600">${r.subject}</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center">100</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center;font-weight:700">${r.ca_score||0}</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center;font-weight:700">${r.exam_score||0}</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center;font-weight:800;font-size:14px">${total}</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center;font-weight:800;color:${g.color}">${g.grade}</td>
+      <td style="padding:5px 6px;border:1px solid #ddd;text-align:center">${g.remark}</td>
     </tr>`;
   }).join('');
 
+  const affRows = affective.map(a => `<tr>
+    <td style="padding:4px 6px;border:1px solid #ddd;font-size:11px">${a[0]}</td>
+    <td style="padding:4px 6px;border:1px solid #ddd;font-weight:700;font-size:11px">${a[1]}</td>
+  </tr>`).join('');
+
+  const psmRows = psychomotor.map(p => `<tr>
+    <td style="padding:4px 6px;border:1px solid #ddd;font-size:11px">${p[0]}</td>
+    <td style="padding:4px 6px;border:1px solid #ddd;font-weight:700;font-size:11px">${p[1]}</td>
+  </tr>`).join('');
+
   const win = window.open('', '_blank');
-  win.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Report Card - ${student.name}</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; padding: 20px; background: white; color: #0F1B3D; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #0F1B3D; padding-bottom: 16px; }
-        .school-name { font-size: 22px; font-weight: 800; color: #0F1B3D; }
-        .school-address { font-size: 12px; color: #6B7280; margin-top: 4px; }
-        .report-title { font-size: 14px; font-weight: 700; color: #2368FE; letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; }
-        .student-info { display: flex; justify-content: space-between; margin: 16px 0; font-size: 13px; }
-        .info-item { margin-bottom: 6px; }
-        .info-label { color: #6B7280; }
-        .info-val { font-weight: 700; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-        th { background: #0F1B3D; color: white; padding: 8px; text-align: left; }
-        td { padding: 8px; border-bottom: 1px solid #e5e7eb; }
-        tr:nth-child(even) { background: #f9fafb; }
-        .summary { margin-top: 16px; display: flex; gap: 20px; }
-        .summary-box { flex: 1; background: #f3f5f9; border-radius: 8px; padding: 12px; text-align: center; }
-        .summary-val { font-size: 24px; font-weight: 800; color: #0F1B3D; }
-        .summary-lbl { font-size: 11px; color: #6B7280; margin-top: 4px; }
-        .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; }
-        .signature { text-align: center; border-top: 1px solid #0F1B3D; padding-top: 8px; width: 150px; }
-        @media print { body { padding: 10px; } }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="school-name">${currentSchool.name}</div>
-        <div class="school-address">${currentSchool.address || ''}</div>
-        ${currentSchool.motto ? `<div style="font-size:11px;font-style:italic;color:#6B7280;margin-top:4px">"${currentSchool.motto}"</div>` : ''}
-        <div class="report-title">Student Report Card</div>
-      </div>
-      <div class="student-info">
-        <div>
-          <div class="info-item"><span class="info-label">Name: </span><span class="info-val">${student.name}</span></div>
-          <div class="info-item"><span class="info-label">Class: </span><span class="info-val">${student.student_class || '—'}</span></div>
-          <div class="info-item"><span class="info-label">Sex: </span><span class="info-val">${student.sex || '—'}</span></div>
-        </div>
-        <div>
-          <div class="info-item"><span class="info-label">Term: </span><span class="info-val">${currentSchool.current_term}</span></div>
-          <div class="info-item"><span class="info-label">Session: </span><span class="info-val">${currentSchool.current_session}</span></div>
-          <div class="info-item"><span class="info-label">Subjects: </span><span class="info-val">${results.length}</span></div>
-        </div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th style="text-align:center">CA (40)</th>
-            <th style="text-align:center">Exam (60)</th>
-            <th style="text-align:center">Total (100)</th>
-            <th style="text-align:center">Grade</th>
-            <th style="text-align:center">Remark</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="summary">
-        <div class="summary-box">
-          <div class="summary-val">${results.length}</div>
-          <div class="summary-lbl">Subjects</div>
-        </div>
-        <div class="summary-box">
-          <div class="summary-val">${avg}</div>
-          <div class="summary-lbl">Average</div>
-        </div>
-        <div class="summary-box">
-          <div class="summary-val">${avg >= 75 ? 'A' : avg >= 65 ? 'B' : avg >= 55 ? 'C' : avg >= 45 ? 'D' : avg >= 40 ? 'E' : 'F'}</div>
-          <div class="summary-lbl">Grade</div>
-        </div>
-      </div>
-      <div class="footer">
-        <div class="signature">Class Teacher</div>
-        <div class="signature">Head Teacher</div>
-        <div class="signature">Principal</div>
-      </div>
-      <script>window.onload = function(){ window.print(); }<\/script>
-    </body>
-    </html>
-  `);
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Report Card - ${student.name}</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: white; color: #0F1B3D; padding: 12px; font-size: 12px; }
+.print-btn { background: #0F1B3D; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 16px; display: block; }
+@media print { .print-btn { display: none; } body { padding: 4px; } }
+.card { border: 2px solid #0F1B3D; padding: 12px; }
+.header { display: flex; align-items: center; gap: 12px; border-bottom: 3px double #0F1B3D; padding-bottom: 10px; margin-bottom: 10px; }
+.logo-box { width: 55px; height: 55px; background: linear-gradient(135deg, #0F1B3D, #2368FE); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-box span { color: white; font-size: 26px; font-weight: 900; }
+.school-center { flex: 1; text-align: center; }
+.school-name { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #0F1B3D; }
+.school-motto { font-size: 11px; font-style: italic; color: #444; margin-top: 2px; }
+.school-addr { font-size: 10px; color: #666; margin-top: 2px; }
+.report-label { display: inline-block; border: 2px solid #0F1B3D; padding: 3px 14px; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #0F1B3D; margin-bottom: 10px; }
+.info-row { display: flex; border-bottom: 1px solid #ddd; }
+.info-row:last-child { border-bottom: none; }
+.info-lbl { font-weight: 800; background: #f0f4ff; padding: 5px 8px; width: 45%; border-right: 1px solid #ddd; font-size: 11px; text-transform: uppercase; }
+.info-val { padding: 5px 8px; font-size: 11px; font-weight: 600; }
+.promoted { color: #16a34a; font-weight: 800; }
+.not-promoted { color: #dc2626; font-weight: 800; }
+table.subject-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px; }
+table.subject-table th { background: #0F1B3D; color: white; padding: 6px 6px; text-align: center; border: 1px solid #0F1B3D; font-size: 11px; }
+table.subject-table th:nth-child(2) { text-align: left; }
+table.subject-table tr:nth-child(even) { background: #f8f9ff; }
+.total-row td { background: #0F1B3D !important; color: white; font-weight: 800; padding: 6px 6px; border: 1px solid #333; }
+.grading-box { background: #f0f4ff; border: 1px solid #0F1B3D; padding: 6px 10px; font-size: 10px; margin-bottom: 10px; line-height: 1.9; }
+.grading-box strong { font-size: 11px; }
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.section-hd { background: #0F1B3D; color: white; padding: 4px 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0; }
+.sig-row { display: flex; justify-content: space-between; margin-top: 20px; }
+.sig-box { text-align: center; width: 28%; }
+.sig-line { border-top: 1.5px solid #0F1B3D; padding-top: 5px; font-size: 11px; font-weight: 700; margin-top: 30px; }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ Print Report Card</button>
+<div class="card">
+  <div class="header">
+    <div class="logo-box"><span>X</span></div>
+    <div class="school-center">
+      <div class="school-name">${currentSchool.name}</div>
+      <div class="school-motto">${currentSchool.motto ? 'MOTTO: ' + currentSchool.motto.toUpperCase() : ''}</div>
+      <div class="school-addr">${currentSchool.address || ''} ${currentSchool.phone ? '| Tel: ' + currentSchool.phone : ''}</div>
+      <div class="report-label">Academic Progress Report Card</div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-row"><span class="info-lbl">Student's Name</span><span class="info-val" style="font-weight:800;font-size:12px">${student.name}</span></div>
+    <div class="info-row"><span class="info-lbl">Term</span><span class="info-val">${currentSchool.current_term}</span></div>
+    <div class="info-row"><span class="info-lbl">Class</span><span class="info-val">${student.student_class || '—'}</span></div>
+    <div class="info-row"><span class="info-lbl">Session</span><span class="info-val">${currentSchool.current_session}</span></div>
+    <div class="info-row"><span class="info-lbl">Sex</span><span class="info-val">${student.sex || '—'}</span></div>
+    <div class="info-row"><span class="info-lbl">Position in Class</span><span class="info-val" style="font-weight:800;font-size:13px">${posStr}</span></div>
+    <div class="info-row"><span class="info-lbl">No. of Subjects</span><span class="info-val">${results.length}</span></div>
+    <div class="info-row"><span class="info-lbl">Student Average</span><span class="info-val" style="font-weight:800">${avg}%</span></div>
+    <div class="info-row"><span class="info-lbl">Class Average</span><span class="info-val">${classAvg}%</span></div>
+    <div class="info-row"><span class="info-lbl">Promotion Status</span><span class="info-val ${promoted ? 'promoted' : 'not-promoted'}">${promoted ? 'PROMOTED' : 'NOT PROMOTED'}</span></div>
+  </div>
+
+  <table class="subject-table">
+    <thead>
+      <tr>
+        <th style="width:28px">S/N</th>
+        <th style="text-align:left">Subject Offered</th>
+        <th>Obtainable</th>
+        <th>CA (40)</th>
+        <th>Exam (60)</th>
+        <th>Total</th>
+        <th>Grade</th>
+        <th>Remark</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+      <tr class="total-row">
+        <td colspan="2" style="text-align:left;padding:6px 8px">TOTAL / AVERAGE</td>
+        <td style="text-align:center">${totalObtainable}</td>
+        <td style="text-align:center">${totalCA}</td>
+        <td style="text-align:center">${totalExam}</td>
+        <td style="text-align:center">${totalScore}</td>
+        <td colspan="2" style="text-align:center">AVG: ${avg}%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grading-box">
+    <strong>Grading Key:</strong> &nbsp;
+    A1(75–100) Excellent &nbsp;|&nbsp; B2(70–74) Very Good &nbsp;|&nbsp; B3(65–69) Good &nbsp;|&nbsp;
+    C4(60–64) Credit &nbsp;|&nbsp; C5(55–59) Credit &nbsp;|&nbsp; C6(50–54) Credit &nbsp;|&nbsp;
+    D7(45–49) Pass &nbsp;|&nbsp; E8(40–44) Pass &nbsp;|&nbsp; F9(0–39) Fail
+  </div>
+
+  <div class="bottom-grid">
+    <div>
+      <div class="section-hd">Affective / Cognitive Report</div>
+      <table style="width:100%;border-collapse:collapse">${affRows}</table>
+    </div>
+    <div>
+      <div class="section-hd">Psychomotor Report</div>
+      <table style="width:100%;border-collapse:collapse">${psmRows}</table>
+    </div>
+  </div>
+
+  <div class="sig-row">
+    <div class="sig-box"><div class="sig-line">Class Teacher</div></div>
+    <div class="sig-box"><div class="sig-line">Head Teacher</div></div>
+    <div class="sig-box"><div class="sig-line">Principal</div></div>
+  </div>
+</div>
+</body>
+</html>`);
   win.document.close();
 }
 
