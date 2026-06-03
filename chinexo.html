@@ -928,7 +928,20 @@ body {
   </div>
 
   <div class="admin-link">
-    <button onclick="showAdmin()">🔐 Admin Panel</button>
+    <button onclick="showAdminPINModal()">🔐 Create Admin PIN</button>
+  </div>
+</div>
+
+<!-- ADMIN PIN MODAL -->
+<div id="adminPINModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:280px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+    <div style="font-size:16px;font-weight:700;color:#000;margin-bottom:12px">Admin Panel</div>
+    <div style="font-size:13px;color:#666;margin-bottom:16px">Enter your admin PIN</div>
+    <input type="password" id="adminPINInput" placeholder="Enter PIN" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:16px" onkeypress="if(event.key==='Enter') verifyAdminPIN()">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeAdminPINModal()" style="padding:8px 16px;background:#f0f0f0;color:#000;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+      <button onclick="verifyAdminPIN()" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Login</button>
+    </div>
   </div>
 </div>
 
@@ -1297,7 +1310,7 @@ let payments = [];
 let results = [];
 let activeFilter = 'all';
 let quickPayStudentId = null;
-const ADMIN_PIN = 'CHINEXO2025';
+const ADMIN_PIN = 'chinexo 2024';
 
 // ===== UTILS =====
 const $ = id => document.getElementById(id);
@@ -2249,12 +2262,34 @@ function sendAllReminders() {
 }
 
 // ===== ADMIN =====
-function showAdmin() {
-  const pin = prompt('Enter admin PIN:');
-  if (pin !== ADMIN_PIN) { alert('Wrong PIN'); return; }
+function showAdminPINModal() {
+  $('adminPINModal').style.display = 'flex';
+  $('adminPINInput').value = '';
+  $('adminPINInput').focus();
+}
+
+function closeAdminPINModal() {
+  $('adminPINModal').style.display = 'none';
+  $('adminPINInput').value = '';
+}
+
+function verifyAdminPIN() {
+  const pin = $('adminPINInput').value;
+  if (pin !== ADMIN_PIN) {
+    alert('Wrong PIN');
+    $('adminPINInput').value = '';
+    $('adminPINInput').focus();
+    return;
+  }
+  closeAdminPINModal();
   $('authScreen').style.display = 'none';
   $('adminScreen').style.display = 'block';
   loadAdminData();
+}
+
+function showAdmin() {
+  // Legacy function - now redirects to modal
+  showAdminPINModal();
 }
 
 function hideAdmin() {
