@@ -954,7 +954,11 @@ async function registerSchool() {
     return;
   }
 
-  setBtn('regBtn', true, 'Create School Account →');
+  // Prevent double-submit immediately
+  const regBtn = $('regBtn');
+  if (regBtn._submitting) return;
+  regBtn._submitting = true;
+  setBtn('regBtn', true, 'Creating account…');
   showLoader();
   try {
     // register_school() hashes the password with bcrypt (server-side)
@@ -971,11 +975,12 @@ async function registerSchool() {
 
     if (error) {
       const map = {
-        PHONE_EXISTS:       'This phone number is already registered.',
+        PHONE_EXISTS:       'This phone number is already registered. Try the School Login tab instead.',
         EMAIL_EXISTS:       'This email is already registered.',
         PASSWORD_TOO_SHORT: 'Password must be at least 8 characters.',
       };
       showErr('regError', map[error.message] || 'Registration failed: ' + error.message);
+      regBtn._submitting = false;
       return;
     }
 
@@ -999,16 +1004,18 @@ async function registerSchool() {
     }
 
     await setSessionToken(result.token);
-    showSucc('regSuccess', '✅ School registered! Logging you in…');
+    showSucc('regSuccess', '\u2705 School registered! Logging you in\u2026');
     persistSession({ type: 'admin', school, token: result.token });
     userRole = 'admin';
+    regBtn._submitting = false;
     setTimeout(() => startApp(school), 1000);
   } catch (e) {
     console.error(e);
-    showErr('regError', 'Connection error. Check internet and try again.');
+    showErr('regError', 'Network error. If you already tapped Register, try the School Login tab with your phone and password.');
+    regBtn._submitting = false;
   } finally {
     hideLoader();
-    setBtn('regBtn', false, 'Create School Account →');
+    setBtn('regBtn', false, 'Create School Account \u2192');
   }
 }
 
