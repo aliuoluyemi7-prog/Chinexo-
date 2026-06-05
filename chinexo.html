@@ -688,7 +688,15 @@ const SA_USER = 'saltadmin';
 const SA_PASS = 'Chinexo@2025!';
 
 const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+const db = createClient(SUPA_URL, SUPA_KEY, {
+  global: {
+    fetch: (url, options = {}) => {
+      return fetch(url, { ...options, signal: AbortSignal.timeout(30000) });
+    }
+  },
+  db: { schema: 'public' },
+  auth: { persistSession: false }
+});
 
 // ═══════════════════════════════════════════════════════════
 // STATE
@@ -954,12 +962,37 @@ async function registerSchool() {
     return;
   }
 
-  // Prevent double-submit immediately
+  // Prevent double-submit
   const regBtn = $('regBtn');
   if (regBtn._submitting) return;
   regBtn._submitting = true;
-  setBtn('regBtn', true, 'Creating account…');
+  setBtn('regBtn', true, 'Please wait… (slow network OK)');
   showLoader();
+
+  // SLOW NETWORK GUARD:
+  // Before registering, check if this phone already exists.
+  // If it does AND login works with the given password,
+  // just log the user in silently instead of showing an error.
+  try {
+    const { data: loginCheck } = await db.rpc('login_school', {
+      p_identifier: phone,
+      p_password:   password
+    });
+    if (loginCheck) {
+      // School already exists and password matches — just log in
+      const r = typeof loginCheck === 'string' ? JSON.parse(loginCheck) : loginCheck;
+      await setSessionToken(r.token);
+      persistSession({ type: 'admin', school: r.school, token: r.token });
+      userRole = 'admin';
+      regBtn._submitting = false;
+      hideLoader();
+      toast('Welcome back! Logging you in…', 'success');
+      setTimeout(() => startApp(r.school), 800);
+      return;
+    }
+  } catch (_) {
+    // Not registered yet — proceed with registration below
+  }
   try {
     // register_school() hashes the password with bcrypt (server-side)
     const { data, error } = await db.rpc('register_school', {
