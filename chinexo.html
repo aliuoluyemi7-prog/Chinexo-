@@ -364,7 +364,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <label class="auth-label">Password</label>
       <input class="auth-input" type="password" id="loginPass" placeholder="Password" autocomplete="current-password"
         onkeydown="if(event.key==='Enter')loginSchool()">
-      <button class="auth-btn" id="loginBtn" onclick="loginSchool()" disabled style="opacity:0.6">Login →</button>
+      <button class="auth-btn" id="loginBtn" onclick="loginSchool()">Login →</button>
       <div class="auth-error" id="loginError"></div>
     </div>
 
@@ -376,7 +376,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <input class="auth-input" type="password" id="teacherPass" placeholder="Password"
         onkeydown="if(event.key==='Enter')loginTeacher()">
       <button class="auth-btn" id="teacherBtn" onclick="loginTeacher()"
-        style="background:linear-gradient(135deg,var(--purple),#6d28d9);opacity:0.6" disabled>Login as Teacher →</button>
+        style="background:linear-gradient(135deg,var(--purple),#6d28d9)">Login as Teacher →</button>
       <div class="auth-error" id="teacherError"></div>
     </div>
 
@@ -406,7 +406,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <input class="auth-input" type="password" id="regPassConfirm" placeholder="Repeat password"
         onkeydown="if(event.key==='Enter')registerSchool()">
       <button class="auth-btn" id="regBtn" onclick="registerSchool()"
-        style="background:linear-gradient(135deg,var(--green),#16a34a);opacity:0.6" disabled>Create School Account →</button>
+        style="background:linear-gradient(135deg,var(--green),#16a34a)">Create School Account →</button>
       <div class="auth-error"   id="regError"></div>
       <div class="auth-success" id="regSuccess"></div>
     </div>
@@ -1017,11 +1017,6 @@ function switchAuth(tab) {
 }
 
 async function loginSchool() {
-  // [PATCH] Guard: ensure Supabase library is loaded before proceeding
-  if (!window._appReady) {
-    showErr('loginError', '⏳ App still loading. Please wait a moment and try again.');
-    return;
-  }
   const identifier = sanitize($('loginId').value);
   const password   = $('loginPass').value;
 
@@ -1104,11 +1099,6 @@ async function loginSchool() {
 }
 
 async function loginTeacher() {
-  // [PATCH] Guard: ensure Supabase library is loaded before proceeding
-  if (!window._appReady) {
-    showErr('teacherError', '⏳ App still loading. Please wait a moment and try again.');
-    return;
-  }
   const phone    = sanitize($('teacherPhone').value);
   const password = $('teacherPass').value;
 
@@ -1150,11 +1140,6 @@ async function loginTeacher() {
 }
 
 async function registerSchool() {
-  // [PATCH] Guard: ensure Supabase library is loaded before proceeding
-  if (!window._appReady) {
-    showErr('regError', '⏳ App still loading. Please wait a moment and try again.');
-    return;
-  }
   // ── Collect & sanitise ──────────────────────────────────
   const name     = sanitize($('regName').value);
   const address  = sanitize($('regAddress').value);
