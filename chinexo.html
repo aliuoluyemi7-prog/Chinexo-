@@ -1037,8 +1037,8 @@ async function loginSchool() {
     const { data: rows, error: qErr } = await db
       .from('schools')
       .select('id,name,address,phone,email,current_term,current_session,default_fee,logo_url,status,subscription_status,subscription_expires,created_at,password,password_hash')
-      .or('phone.eq.' + identifier + ',email.eq.' + identifier)
-      .is('deleted_at', null)
+      .or(`phone.eq.${identifier},email.eq.${identifier}`)
+      .filter('deleted_at', 'is', null)
       .limit(1);
 
     if (qErr || !rows || rows.length === 0) {
