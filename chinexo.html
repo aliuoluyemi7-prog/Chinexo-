@@ -5,8 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chinexo — School Management Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- NETWORK PATCH: Multi-CDN fallback loader                   -->
+<!-- Tries jsdelivr first, falls back to unpkg if it fails      -->
+<!-- Shows loading state until scripts are ready                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+window._supabaseReady = false;
+window._xlsxReady    = false;
+window._appReady     = false;
+
+// Re-enable buttons and hide status once both libraries are loaded
+function checkAppReady() {
+  if (!window._supabaseReady || !window._xlsxReady) return;
+  window._appReady = true;
+  ['loginBtn','teacherBtn','regBtn'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.disabled = false; el.style.opacity = '1'; }
+  });
+  var s = document.getElementById('appLoadStatus');
+  if (s) s.style.display = 'none';
+  console.log('[Chinexo] All libraries ready.');
+}
+
+// Load script with primary CDN, fallback to secondary if primary fails
+function loadScriptWithFallback(primary, fallback, onSuccess, onFail) {
+  var s = document.createElement('script');
+  s.src = primary; s.async = false;
+  s.onload = onSuccess;
+  s.onerror = function() {
+    console.warn('[Chinexo] CDN failed, trying fallback: ' + fallback);
+    var s2 = document.createElement('script');
+    s2.src = fallback; s2.async = false;
+    s2.onload = onSuccess; s2.onerror = onFail;
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+}
+
+// Load Supabase: jsdelivr → unpkg
+loadScriptWithFallback(
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+  'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+  function() {
+    window._supabaseReady = true;
+    console.log('[Chinexo] Supabase library loaded.');
+    checkAppReady();
+  },
+  function() {
+    var s = document.getElementById('appLoadStatus');
+    if (s) { s.textContent = '⚠️ Failed to load app. Check internet and refresh.'; s.style.color = '#ef4444'; s.style.display = 'block'; }
+    console.error('[Chinexo] Supabase failed on all CDNs.');
+  }
+);
+
+// Load XLSX: jsdelivr → unpkg (non-fatal if fails — only affects export)
+loadScriptWithFallback(
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
+  function() {
+    window._xlsxReady = true;
+    console.log('[Chinexo] XLSX library loaded.');
+    checkAppReady();
+  },
+  function() {
+    console.warn('[Chinexo] XLSX failed — export feature disabled.');
+    window._xlsxReady = true; // non-fatal, unblock app
+    checkAppReady();
+  }
+);
+</script>
 <style>
 :root {
   --navy:#0F1B3D; --blue:#2368FE; --green:#22C55E; --purple:#7C3AED;
@@ -296,7 +364,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <label class="auth-label">Password</label>
       <input class="auth-input" type="password" id="loginPass" placeholder="Password" autocomplete="current-password"
         onkeydown="if(event.key==='Enter')loginSchool()">
-      <button class="auth-btn" id="loginBtn" onclick="loginSchool()">Login →</button>
+      <button class="auth-btn" id="loginBtn" onclick="loginSchool()" disabled style="opacity:0.6">Login →</button>
       <div class="auth-error" id="loginError"></div>
     </div>
 
@@ -308,7 +376,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <input class="auth-input" type="password" id="teacherPass" placeholder="Password"
         onkeydown="if(event.key==='Enter')loginTeacher()">
       <button class="auth-btn" id="teacherBtn" onclick="loginTeacher()"
-        style="background:linear-gradient(135deg,var(--purple),#6d28d9)">Login as Teacher →</button>
+        style="background:linear-gradient(135deg,var(--purple),#6d28d9);opacity:0.6" disabled>Login as Teacher →</button>
       <div class="auth-error" id="teacherError"></div>
     </div>
 
@@ -338,13 +406,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <input class="auth-input" type="password" id="regPassConfirm" placeholder="Repeat password"
         onkeydown="if(event.key==='Enter')registerSchool()">
       <button class="auth-btn" id="regBtn" onclick="registerSchool()"
-        style="background:linear-gradient(135deg,var(--green),#16a34a)">Create School Account →</button>
+        style="background:linear-gradient(135deg,var(--green),#16a34a);opacity:0.6" disabled>Create School Account →</button>
       <div class="auth-error"   id="regError"></div>
       <div class="auth-success" id="regSuccess"></div>
     </div>
   </div>
-  <!-- [PATCH] Connection status — shown during retry attempts -->
-  <div id="connStatus" style="display:none;text-align:center;font-size:12px;padding:6px 0 2px;color:#6b7280;letter-spacing:0.01em;"></div>
+  <!-- [PATCH] App loading status — shown while CDN scripts load -->
+  <div id="appLoadStatus" style="text-align:center;font-size:13px;padding:8px;color:#6b7280;background:rgba(255,255,255,0.08);border-radius:8px;margin-top:8px;">
+    ⏳ App loading... please wait
+  </div>
   <div class="admin-link">
     <button onclick="openSALogin()">🔐 Super Admin</button>
   </div>
@@ -690,111 +760,61 @@ const SA_USER = 'saltadmin';
 const SA_PASS = 'Chinexo@2025!';
 
 // ═══════════════════════════════════════════════════════════
-// NETWORK RELIABILITY PATCH — added for Nigeria mobile stability
-// Problem: Supabase is in Ireland (eu-west-1), free tier sleeps,
-//          Nigerian mobile networks are unstable.
-// Solution: retry wrapper + warmup + status messages
+// NETWORK RELIABILITY PATCH — Nigeria mobile + Supabase Ireland
 // ═══════════════════════════════════════════════════════════
 
-// [PATCH] Debug mode — set to true to simulate bad network during testing
+// [PATCH] Debug mode — set true to simulate bad network
 const DEBUG_NETWORK = false;
 
-// [PATCH] Progressive timeouts per attempt (ms): 15s, 30s, 45s
+// [PATCH] Progressive timeouts: 15s, 30s, 45s
 const RETRY_TIMEOUTS = [15000, 30000, 45000];
-
-// [PATCH] Status messages shown to user during retry attempts
 const RETRY_MESSAGES = [
   'Connecting...',
   'Waking server... please wait',
   'Still trying... network is slow'
 ];
 
-// [PATCH] Show a status message in the #connStatus element (if it exists)
-function setConnStatus(msg, isError = false) {
-  const el = document.getElementById('connStatus');
+function setConnStatus(msg, isError) {
+  var el = document.getElementById('connStatus');
   if (!el) return;
   el.textContent = msg;
-  el.style.color  = isError ? '#ef4444' : '#6b7280';
+  el.style.color   = isError ? '#ef4444' : '#6b7280';
   el.style.display = msg ? 'block' : 'none';
 }
 
-// [PATCH] fetchWithRetry — wraps native fetch with:
-//   - 3 attempts, progressive timeouts (15s / 30s / 45s)
-//   - Exponential backoff between retries (1s, 2s)
-//   - Retries on: network failure, timeout, 5xx errors
-//   - Does NOT retry 4xx errors (bad credentials, not-found, etc.)
-//   - Updates status UI on each attempt
-//   - DEBUG_NETWORK mode: random delays + random 30% failure
-async function fetchWithRetry(url, options = {}) {
-  const maxAttempts = RETRY_TIMEOUTS.length;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    // Update status UI
+async function fetchWithRetry(url, options) {
+  options = options || {};
+  var maxAttempts = RETRY_TIMEOUTS.length;
+  for (var attempt = 0; attempt < maxAttempts; attempt++) {
     setConnStatus(RETRY_MESSAGES[attempt]);
-    console.log(`[Chinexo Network] Attempt ${attempt + 1}/${maxAttempts}: ${url}`);
-
-    // DEBUG: simulate slow / broken network
+    console.log('[Chinexo Network] Attempt ' + (attempt+1) + '/' + maxAttempts + ': ' + url);
     if (DEBUG_NETWORK) {
-      const delay = 5000 + Math.random() * 10000; // 5–15s delay
-      console.warn(`[DEBUG_NETWORK] Injecting ${Math.round(delay)}ms delay`);
-      await new Promise(r => setTimeout(r, delay));
+      var delay = 5000 + Math.random() * 10000;
+      await new Promise(function(r){ setTimeout(r, delay); });
       if (Math.random() < 0.3) {
-        console.warn('[DEBUG_NETWORK] Simulating random failure');
-        if (attempt < maxAttempts - 1) {
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
-          continue;
-        }
-        throw new Error('Simulated network failure (DEBUG_NETWORK=true)');
+        if (attempt < maxAttempts - 1) { await new Promise(function(r){ setTimeout(r, Math.pow(2,attempt)*1000); }); continue; }
+        throw new Error('Simulated failure');
       }
     }
-
     try {
-      const controller = new AbortController();
-      const timeoutId  = setTimeout(() => controller.abort(), RETRY_TIMEOUTS[attempt]);
-
-      // Merge caller's signal with our timeout signal
-      const signal = options.signal
-        ? anySignal([options.signal, controller.signal])
-        : controller.signal;
-
-      const response = await fetch(url, { ...options, signal });
+      var controller = new AbortController();
+      var timeoutId  = setTimeout(function(){ controller.abort(); }, RETRY_TIMEOUTS[attempt]);
+      var signal = options.signal ? anySignal([options.signal, controller.signal]) : controller.signal;
+      var response = await fetch(url, Object.assign({}, options, { signal: signal }));
       clearTimeout(timeoutId);
-
-      // Don't retry 4xx — those are caller errors (wrong password, not found, etc.)
-      if (response.status >= 400 && response.status < 500) {
-        console.log(`[Chinexo Network] 4xx response (${response.status}) — not retrying`);
-        setConnStatus('');
+      if (response.status >= 400 && response.status < 500) { setConnStatus(''); return response; }
+      if (response.status >= 500) {
+        if (attempt < maxAttempts - 1) { await new Promise(function(r){ setTimeout(r, Math.pow(2,attempt)*1000); }); continue; }
+        setConnStatus('Server error. Try again.', true);
         return response;
       }
-
-      // Retry 5xx server errors
-      if (response.status >= 500) {
-        console.warn(`[Chinexo Network] 5xx response (${response.status}) on attempt ${attempt + 1}`);
-        if (attempt < maxAttempts - 1) {
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
-          continue;
-        }
-        setConnStatus('Server error. Please try again.', true);
-        return response; // return it and let caller handle
-      }
-
-      // Success
-      console.log(`[Chinexo Network] Success on attempt ${attempt + 1}`);
       setConnStatus('');
       return response;
-
-    } catch (err) {
-      const isTimeout = err.name === 'AbortError';
-      console.warn(`[Chinexo Network] ${isTimeout ? 'Timeout' : 'Error'} on attempt ${attempt + 1}:`, err.message);
-
+    } catch(err) {
+      console.warn('[Chinexo Network] ' + (err.name==='AbortError'?'Timeout':'Error') + ' attempt ' + (attempt+1) + ':', err.message);
       if (attempt < maxAttempts - 1) {
-        // Exponential backoff: 1s after attempt 1, 2s after attempt 2
-        const backoff = Math.pow(2, attempt) * 1000;
-        console.log(`[Chinexo Network] Retrying in ${backoff}ms...`);
-        await new Promise(r => setTimeout(r, backoff));
+        await new Promise(function(r){ setTimeout(r, Math.pow(2,attempt)*1000); });
       } else {
-        // All attempts exhausted
-        console.error('[Chinexo Network] All attempts failed.');
         setConnStatus('');
         throw err;
       }
@@ -802,40 +822,46 @@ async function fetchWithRetry(url, options = {}) {
   }
 }
 
-// [PATCH] Helper: abort if ANY signal fires (polyfill for anySignal)
 function anySignal(signals) {
-  const controller = new AbortController();
-  for (const signal of signals) {
-    if (signal.aborted) { controller.abort(); break; }
-    signal.addEventListener('abort', () => controller.abort(), { once: true });
-  }
+  var controller = new AbortController();
+  signals.forEach(function(signal) {
+    if (signal.aborted) { controller.abort(); return; }
+    signal.addEventListener('abort', function(){ controller.abort(); }, { once: true });
+  });
   return controller.signal;
 }
 
-// [PATCH] warmupSupabase — ping Supabase before login to wake it from sleep.
-//   Called silently before each login attempt. Fails silently if it doesn't work.
 async function warmupSupabase() {
   try {
-    console.log('[Chinexo Network] Warmup ping starting...');
+    console.log('[Chinexo Network] Warmup ping...');
     setConnStatus('Connecting...');
-    // Lightweight ping: fetch the REST root endpoint (no auth needed)
-    await fetch(`${SUPA_URL}/rest/v1/`, {
+    await fetch(SUPA_URL + '/rest/v1/', {
       headers: { apikey: SUPA_KEY },
       signal: AbortSignal.timeout(8000)
     });
-    console.log('[Chinexo Network] Warmup ping complete.');
-  } catch (e) {
-    // Warmup failure is silent — the real request will retry anyway
-    console.warn('[Chinexo Network] Warmup ping failed (non-fatal):', e.message);
+    console.log('[Chinexo Network] Warmup done.');
+  } catch(e) {
+    console.warn('[Chinexo Network] Warmup failed (non-fatal):', e.message);
   }
 }
 
-// [PATCH] Create Supabase client using fetchWithRetry as the transport
+// [PATCH] Add status element for retry messages
+(function() {
+  var existing = document.getElementById('connStatus');
+  if (!existing) {
+    var el = document.createElement('div');
+    el.id = 'connStatus';
+    el.style.cssText = 'display:none;text-align:center;font-size:12px;padding:4px 0;color:#6b7280;';
+    document.addEventListener('DOMContentLoaded', function() {
+      var adminLink = document.querySelector('.admin-link');
+      if (adminLink) adminLink.parentNode.insertBefore(el, adminLink);
+    });
+  }
+})();
+
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY, {
-  global: {
-    fetch: fetchWithRetry   // all Supabase calls now go through retry wrapper
-  },
+  global: { fetch: fetchWithRetry },
   db: { schema: 'public' },
   auth: { persistSession: false }
 });
@@ -991,6 +1017,11 @@ function switchAuth(tab) {
 }
 
 async function loginSchool() {
+  // [PATCH] Guard: ensure Supabase library is loaded before proceeding
+  if (!window._appReady) {
+    showErr('loginError', '⏳ App still loading. Please wait a moment and try again.');
+    return;
+  }
   const identifier = sanitize($('loginId').value);
   const password   = $('loginPass').value;
 
@@ -1073,6 +1104,11 @@ async function loginSchool() {
 }
 
 async function loginTeacher() {
+  // [PATCH] Guard: ensure Supabase library is loaded before proceeding
+  if (!window._appReady) {
+    showErr('teacherError', '⏳ App still loading. Please wait a moment and try again.');
+    return;
+  }
   const phone    = sanitize($('teacherPhone').value);
   const password = $('teacherPass').value;
 
@@ -1114,6 +1150,11 @@ async function loginTeacher() {
 }
 
 async function registerSchool() {
+  // [PATCH] Guard: ensure Supabase library is loaded before proceeding
+  if (!window._appReady) {
+    showErr('regError', '⏳ App still loading. Please wait a moment and try again.');
+    return;
+  }
   // ── Collect & sanitise ──────────────────────────────────
   const name     = sanitize($('regName').value);
   const address  = sanitize($('regAddress').value);
