@@ -343,6 +343,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:va
       <div class="auth-success" id="regSuccess"></div>
     </div>
   </div>
+  <!-- [PATCH] Connection status — shown during retry attempts -->
+  <div id="connStatus" style="display:none;text-align:center;font-size:12px;padding:6px 0 2px;color:#6b7280;letter-spacing:0.01em;"></div>
   <div class="admin-link">
     <button onclick="openSALogin()">🔐 Super Admin</button>
   </div>
@@ -687,12 +689,152 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const SA_USER = 'saltadmin';
 const SA_PASS = 'Chinexo@2025!';
 
+// ═══════════════════════════════════════════════════════════
+// NETWORK RELIABILITY PATCH — added for Nigeria mobile stability
+// Problem: Supabase is in Ireland (eu-west-1), free tier sleeps,
+//          Nigerian mobile networks are unstable.
+// Solution: retry wrapper + warmup + status messages
+// ═══════════════════════════════════════════════════════════
+
+// [PATCH] Debug mode — set to true to simulate bad network during testing
+const DEBUG_NETWORK = false;
+
+// [PATCH] Progressive timeouts per attempt (ms): 15s, 30s, 45s
+const RETRY_TIMEOUTS = [15000, 30000, 45000];
+
+// [PATCH] Status messages shown to user during retry attempts
+const RETRY_MESSAGES = [
+  'Connecting...',
+  'Waking server... please wait',
+  'Still trying... network is slow'
+];
+
+// [PATCH] Show a status message in the #connStatus element (if it exists)
+function setConnStatus(msg, isError = false) {
+  const el = document.getElementById('connStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color  = isError ? '#ef4444' : '#6b7280';
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// [PATCH] fetchWithRetry — wraps native fetch with:
+//   - 3 attempts, progressive timeouts (15s / 30s / 45s)
+//   - Exponential backoff between retries (1s, 2s)
+//   - Retries on: network failure, timeout, 5xx errors
+//   - Does NOT retry 4xx errors (bad credentials, not-found, etc.)
+//   - Updates status UI on each attempt
+//   - DEBUG_NETWORK mode: random delays + random 30% failure
+async function fetchWithRetry(url, options = {}) {
+  const maxAttempts = RETRY_TIMEOUTS.length;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    // Update status UI
+    setConnStatus(RETRY_MESSAGES[attempt]);
+    console.log(`[Chinexo Network] Attempt ${attempt + 1}/${maxAttempts}: ${url}`);
+
+    // DEBUG: simulate slow / broken network
+    if (DEBUG_NETWORK) {
+      const delay = 5000 + Math.random() * 10000; // 5–15s delay
+      console.warn(`[DEBUG_NETWORK] Injecting ${Math.round(delay)}ms delay`);
+      await new Promise(r => setTimeout(r, delay));
+      if (Math.random() < 0.3) {
+        console.warn('[DEBUG_NETWORK] Simulating random failure');
+        if (attempt < maxAttempts - 1) {
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+          continue;
+        }
+        throw new Error('Simulated network failure (DEBUG_NETWORK=true)');
+      }
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId  = setTimeout(() => controller.abort(), RETRY_TIMEOUTS[attempt]);
+
+      // Merge caller's signal with our timeout signal
+      const signal = options.signal
+        ? anySignal([options.signal, controller.signal])
+        : controller.signal;
+
+      const response = await fetch(url, { ...options, signal });
+      clearTimeout(timeoutId);
+
+      // Don't retry 4xx — those are caller errors (wrong password, not found, etc.)
+      if (response.status >= 400 && response.status < 500) {
+        console.log(`[Chinexo Network] 4xx response (${response.status}) — not retrying`);
+        setConnStatus('');
+        return response;
+      }
+
+      // Retry 5xx server errors
+      if (response.status >= 500) {
+        console.warn(`[Chinexo Network] 5xx response (${response.status}) on attempt ${attempt + 1}`);
+        if (attempt < maxAttempts - 1) {
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+          continue;
+        }
+        setConnStatus('Server error. Please try again.', true);
+        return response; // return it and let caller handle
+      }
+
+      // Success
+      console.log(`[Chinexo Network] Success on attempt ${attempt + 1}`);
+      setConnStatus('');
+      return response;
+
+    } catch (err) {
+      const isTimeout = err.name === 'AbortError';
+      console.warn(`[Chinexo Network] ${isTimeout ? 'Timeout' : 'Error'} on attempt ${attempt + 1}:`, err.message);
+
+      if (attempt < maxAttempts - 1) {
+        // Exponential backoff: 1s after attempt 1, 2s after attempt 2
+        const backoff = Math.pow(2, attempt) * 1000;
+        console.log(`[Chinexo Network] Retrying in ${backoff}ms...`);
+        await new Promise(r => setTimeout(r, backoff));
+      } else {
+        // All attempts exhausted
+        console.error('[Chinexo Network] All attempts failed.');
+        setConnStatus('');
+        throw err;
+      }
+    }
+  }
+}
+
+// [PATCH] Helper: abort if ANY signal fires (polyfill for anySignal)
+function anySignal(signals) {
+  const controller = new AbortController();
+  for (const signal of signals) {
+    if (signal.aborted) { controller.abort(); break; }
+    signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+  return controller.signal;
+}
+
+// [PATCH] warmupSupabase — ping Supabase before login to wake it from sleep.
+//   Called silently before each login attempt. Fails silently if it doesn't work.
+async function warmupSupabase() {
+  try {
+    console.log('[Chinexo Network] Warmup ping starting...');
+    setConnStatus('Connecting...');
+    // Lightweight ping: fetch the REST root endpoint (no auth needed)
+    await fetch(`${SUPA_URL}/rest/v1/`, {
+      headers: { apikey: SUPA_KEY },
+      signal: AbortSignal.timeout(8000)
+    });
+    console.log('[Chinexo Network] Warmup ping complete.');
+  } catch (e) {
+    // Warmup failure is silent — the real request will retry anyway
+    console.warn('[Chinexo Network] Warmup ping failed (non-fatal):', e.message);
+  }
+}
+
+// [PATCH] Create Supabase client using fetchWithRetry as the transport
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY, {
   global: {
-    fetch: (url, options = {}) => {
-      return fetch(url, { ...options, signal: AbortSignal.timeout(30000) });
-    }
+    fetch: fetchWithRetry   // all Supabase calls now go through retry wrapper
   },
   db: { schema: 'public' },
   auth: { persistSession: false }
@@ -856,6 +998,7 @@ async function loginSchool() {
 
   setBtn('loginBtn', true, 'Login →');
   showLoader();
+  await warmupSupabase(); // [PATCH] wake Supabase before main request
   try {
     // FAST LOGIN: query schools table directly instead of RPC
     // This avoids the extra round-trip overhead of PL/pgSQL functions
@@ -937,6 +1080,7 @@ async function loginTeacher() {
 
   setBtn('teacherBtn', true, 'Login as Teacher →');
   showLoader();
+  await warmupSupabase(); // [PATCH] wake Supabase before main request
   try {
     // login_teacher v2 returns { token, teacher }
     const { data, error } = await db.rpc('login_teacher', {
