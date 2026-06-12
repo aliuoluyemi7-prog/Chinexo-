@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chinexo — School Management (Offline)</title>
+<meta name="theme-color" content="#0F1B3D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chinexo">
+<style>
+:root{--navy:#0F1B3D;--blue:#2368FE;--green:#22C55E;--purple:#7C3AED;--light:#F3F5F9;--white:#fff;--grey:#6B7280;--border:#E5E7EB;--red:#EF4444;--amber:#F59E0B}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--light);color:var(--navy);min-height:100vh}
+.offline-badge{position:fixed;top:8px;right:8px;background:#16a34a;color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;z-index:9999;letter-spacing:.5px}
+.screen{display:none}
+#authScreen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--navy);padding:24px;position:relative;overflow:hidden}
+#authScreen.active::before{content:'';position:absolute;top:-100px;right:-100px;width:300px;height:300px;background:radial-gradient(circle,rgba(35,104,254,.3) 0%,transparent 70%);border-radius:50%}
+#authScreen.active::after{content:'';position:absolute;bottom:-80px;left:-80px;width:250px;height:250px;background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);border-radius:50%}
+#superAdminScreen.active{display:block;min-height:100vh;background:var(--navy)}
+#appScreen.active{display:block}
+.auth-logo{text-align:center;margin-bottom:20px;position:relative;z-index:1}
+.auth-logo-text{font-size:38px;font-weight:900;color:white;letter-spacing:-1px}
+.auth-logo-text span{color:var(--green)}
+.auth-tagline{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px}
+.auth-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:24px;width:100%;max-width:380px;position:relative;z-index:1;backdrop-filter:blur(10px)}
+.auth-tabs{display:flex;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin-bottom:22px}
+.auth-tab{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-radius:10px;transition:all .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.auth-tab.active{background:var(--blue);color:white}
+.auth-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:5px;margin-top:13px;display:block}
+.auth-label:first-of-type{margin-top:0}
+.auth-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.12);border-radius:10px;font-size:14px;color:white;outline:none;transition:border .2s}
+.auth-input::placeholder{color:rgba(255,255,255,.3)}
+.auth-input:focus{border-color:var(--blue)}
+.auth-input option{color:var(--navy);background:white}
+.auth-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),#1a52d4);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:18px;box-shadow:0 4px 20px rgba(35,104,254,.4);transition:opacity .2s}
+.auth-btn:active{opacity:.85}
+.auth-error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
+.auth-success{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#86efac;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
+.admin-link{margin-top:14px;text-align:center;position:relative;z-index:1}
+.admin-link button{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);padding:8px 16px;border-radius:8px;font-size:12px;cursor:pointer}
+.sa-header{background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.sa-title{font-size:20px;font-weight:800;color:white}
+.sa-title span{color:var(--green)}
+.sa-content{padding:20px 16px 40px}
+.sa-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.sa-stat-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px}
+.sa-stat-val{font-size:28px;font-weight:800;color:white}
+.sa-stat-val.green{color:var(--green)}.sa-stat-val.blue{color:#60a5fa}.sa-stat-val.amber{color:#fbbf24}
+.sa-stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px}
+.sa-section-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.school-list-item{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px;margin-bottom:12px}
+.school-item-name{font-size:16px;font-weight:700;color:white;margin-bottom:4px}
+.school-item-meta{font-size:12px;color:rgba(255,255,255,.5)}
+.school-item-stats{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.school-stat{background:rgba(255,255,255,.08);border-radius:8px;padding:6px 10px;font-size:11px;color:rgba(255,255,255,.7)}
+.school-stat strong{color:white;display:block;font-size:15px}
+.school-item-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.sa-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none}
+.sa-btn.primary{background:var(--blue);color:white}
+.sa-btn.danger{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.sa-btn.success{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.sa-btn.amber{background:rgba(245,158,11,.2);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.sub-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
+.sub-badge.ok{background:rgba(34,197,94,.2);color:var(--green)}
+.sub-badge.exp{background:rgba(239,68,68,.2);color:var(--red)}
+.sub-badge.sus{background:rgba(245,158,11,.2);color:var(--amber)}
+.app-header{background:var(--navy);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.header-logo{font-size:20px;font-weight:900;color:white;display:flex;align-items:center;gap:6px}
+.header-logo span{color:var(--green)}
+.header-right{display:flex;align-items:center;gap:8px}
+.school-badge{font-size:11px;color:rgba(255,255,255,.6);text-align:right;max-width:140px;line-height:1.3}
+.role-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase}
+.role-pill.admin{background:rgba(35,104,254,.3);color:#93c5fd}
+.role-pill.teacher{background:rgba(124,58,237,.3);color:#c4b5fd}
+.logout-btn{background:rgba(255,255,255,.1);border:none;color:white;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);display:flex;z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
+.nav-item{flex:1;padding:10px 4px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.nav-icon{font-size:20px;display:block}
+.nav-label{font-size:10px;font-weight:600;color:var(--grey);margin-top:2px}
+.nav-item.active .nav-label{color:var(--blue)}
+.nav-item.active .nav-icon{transform:translateY(-2px)}
+.page{display:none;padding:16px;padding-bottom:100px}
+.page.active{display:block}
+.dash-hero{background:linear-gradient(135deg,var(--navy) 0%,#1a2f6e 100%);border-radius:20px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.dash-hero::after{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:radial-gradient(circle,rgba(35,104,254,.4) 0%,transparent 70%);border-radius:50%}
+.dash-hero-label{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.dash-hero-school{font-size:20px;font-weight:800;color:white;margin-bottom:4px;position:relative;z-index:1}
+.dash-hero-term{font-size:12px;color:var(--green);font-weight:600;margin-bottom:16px}
+.dash-hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;position:relative;z-index:1}
+.dash-stat{background:rgba(255,255,255,.08);border-radius:12px;padding:10px;text-align:center}
+.dash-stat-val{font-size:22px;font-weight:800;color:white;line-height:1}
+.dash-stat-val.green{color:var(--green)}.dash-stat-val.red{color:#f87171}
+.dash-stat-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:4px}
+.collection-card{background:white;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.collection-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.collection-label{font-size:13px;font-weight:600;color:var(--navy)}
+.collection-pct{font-size:13px;font-weight:700;color:var(--blue)}
+.progress-track{height:8px;background:var(--light);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.progress-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .6s ease}
+.collection-amounts{display:flex;justify-content:space-between;font-size:12px;color:var(--grey)}
+.collection-amounts strong{color:var(--navy)}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.section-title{font-size:13px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.5px}
+.student-card{background:white;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);border-left:4px solid var(--border);transition:transform .15s}
+.student-card:active{transform:scale(.98)}
+.student-card.paid{border-left-color:var(--green)}.student-card.partial{border-left-color:var(--amber)}.student-card.unpaid{border-left-color:var(--red)}
+.student-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.student-name{font-size:15px;font-weight:700;color:var(--navy)}
+.student-class{font-size:11px;color:var(--grey);margin-top:2px}
+.badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.badge.paid{background:#dcfce7;color:#16a34a}.badge.partial{background:#fef3c7;color:#b45309}.badge.unpaid{background:#fee2e2;color:#dc2626}
+.fee-row{display:flex;justify-content:space-between;font-size:12px;color:var(--grey);margin-bottom:3px}
+.fee-row strong{color:var(--navy);font-weight:600}
+.mini-progress{height:4px;background:var(--light);border-radius:4px;margin:8px 0;overflow:hidden}
+.mini-fill{height:100%;border-radius:4px;background:var(--green)}
+.mini-fill.partial{background:var(--amber)}.mini-fill.unpaid{background:var(--red)}
+.student-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:opacity .2s}
+.btn:active{opacity:.8}
+.btn.primary{background:var(--blue);color:white}.btn.green{background:var(--green);color:white}
+.btn.outline{background:white;color:var(--blue);border:2px solid var(--blue)}
+.btn.danger{background:var(--red);color:white}
+.btn.full{width:100%;display:block;padding:14px;font-size:15px}
+.btn.small{padding:6px 12px;font-size:12px}
+.wa-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#25D366;color:white;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none}
+.form-card{background:white;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.form-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--grey);margin-bottom:5px;margin-top:12px}
+.form-label:first-of-type{margin-top:0}
+.form-input,.form-select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--navy);background:white;outline:none;transition:border .2s}
+.form-input:focus,.form-select:focus{border-color:var(--blue)}
+.pill-row{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.pill{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:white;color:var(--grey);cursor:pointer;white-space:nowrap;transition:all .2s}
+.pill.active{background:var(--navy);color:white;border-color:var(--navy)}
+.search-input{width:100%;padding:11px 14px 11px 38px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236B7280' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z'/%3E%3C/svg%3E") no-repeat 12px center;outline:none;color:var(--navy);margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:24px 24px 0 0;padding:24px 20px;width:100%;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--grey);margin-bottom:16px}
+.pay-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.pay-item:last-child{border-bottom:none}
+.pay-name{font-size:14px;font-weight:600;color:var(--navy)}
+.pay-meta{font-size:11px;color:var(--grey);margin-top:2px}
+.pay-amount{font-size:15px;font-weight:700;color:var(--green)}
+.result-card{background:white;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.result-subject{font-size:14px;font-weight:700;color:var(--navy)}
+.result-scores{display:flex;gap:12px;margin-top:8px}
+.score-box{flex:1;background:var(--light);border-radius:8px;padding:8px;text-align:center}
+.score-val{font-size:20px;font-weight:800;color:var(--navy)}
+.score-lbl{font-size:10px;color:var(--grey);margin-top:2px}
+.score-total{background:var(--navy)}.score-total .score-val{color:white}.score-total .score-lbl{color:rgba(255,255,255,.6)}
+.grade-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;margin-top:8px}
+.empty{text-align:center;padding:48px 20px;color:var(--grey)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-text{font-size:14px;font-weight:500}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3);pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:#16a34a}.toast.error{background:var(--red)}
+.loader{position:fixed;inset:0;background:rgba(15,27,61,.8);display:none;align-items:center;justify-content:center;z-index:400}
+.loader.on{display:flex}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.receipt-paper{background:white;border:2px dashed #e5e7eb;border-radius:16px;padding:24px 20px}
+.receipt-header{text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed #e5e7eb}
+.receipt-school{font-size:18px;font-weight:800;color:#0F1B3D}
+.receipt-sub{font-size:11px;color:#6B7280;margin-top:2px}
+.receipt-title{font-size:12px;font-weight:700;color:#2368FE;letter-spacing:1px;text-transform:uppercase;margin-top:8px}
+.receipt-amount{text-align:center;background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0}
+.receipt-amount-val{font-size:28px;font-weight:800;color:#16a34a}
+.receipt-amount-lbl{font-size:11px;color:#6B7280;margin-top:2px}
+.receipt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+.receipt-row:last-child{border-bottom:none}
+.receipt-row-label{color:#6B7280}.receipt-row-val{font-weight:700;color:#0F1B3D;text-align:right}
+.receipt-footer{text-align:center;margin-top:16px;padding-top:16px;border-top:1px dashed #e5e7eb;font-size:11px;color:#9CA3AF;line-height:1.6}
+/* ── SYNC PAGE ── */
+.sync-step{background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;gap:14px;align-items:flex-start}
+.sync-step-num{min-width:32px;height:32px;background:var(--navy);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.sync-step-body{flex:1}
+.sync-step-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.sync-step-desc{font-size:12px;color:var(--grey);line-height:1.5}
+.sync-warning{background:#fef3c7;border:1px solid #fcd34d;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400e;line-height:1.5}
+/* ── ONBOARDING ── */
+.onboard-banner{background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.onboard-title{font-size:13px;font-weight:700;color:#3730a3;margin-bottom:8px}
+.onboard-steps{display:flex;flex-direction:column;gap:6px}
+.onboard-step{display:flex;align-items:center;gap:8px;font-size:12px;color:#4338ca}
+.onboard-step .dot{width:20px;height:20px;background:#4f46e5;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+/* ── PAYMENT HISTORY MODAL ── */
+.ph-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.ph-item:last-child{border-bottom:none}
+.ph-left{flex:1}
+.ph-date{font-size:12px;font-weight:600;color:var(--navy)}
+.ph-method{font-size:11px;color:var(--grey)}
+.ph-by{font-size:10px;color:var(--grey);margin-top:1px}
+.ph-amount{font-size:14px;font-weight:700;color:var(--green)}
+/* ── INFO CHIPS ── */
+.info-chip{display:inline-flex;align-items:center;gap:4px;background:var(--light);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--grey);margin-right:6px;margin-bottom:6px}
+/* ── VERSION BADGE ── */
+.version-note{font-size:10px;color:var(--grey);text-align:center;padding:8px;margin-top:8px}
+/* ── DANGER CONFIRM ── */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:white;border-radius:16px;padding:24px;max-width:320px;width:100%}
+.confirm-title{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px}
+.confirm-msg{font-size:13px;color:var(--grey);margin-bottom:20px;line-height:1.5}
+.confirm-actions{display:flex;gap:10px}
+.confirm-cancel{flex:1;padding:12px;background:var(--light);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--navy)}
+.confirm-ok{flex:1;padding:12px;background:var(--red);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:white}
+/* ── LICENSE SCREEN ── */
+#licenseScreen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--navy);padding:24px;position:relative;overflow:hidden}
+#licenseScreen.active::before{content:'';position:absolute;top:-100px;right:-100px;width:300px;height:300px;background:radial-gradient(circle,rgba(239,68,68,.25) 0%,transparent 70%);border-radius:50%}
+#licenseScreen.active::after{content:'';position:absolute;bottom:-80px;left:-80px;width:250px;height:250px;background:radial-gradient(circle,rgba(245,158,11,.15) 0%,transparent 70%);border-radius:50%}
+.lic-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;position:relative;z-index:1;text-align:center}
+.lic-icon{font-size:52px;margin-bottom:12px}
+.lic-title{font-size:22px;font-weight:900;color:white;margin-bottom:6px}
+.lic-sub{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:20px;line-height:1.5}
+.lic-days{font-size:48px;font-weight:900;color:var(--amber);line-height:1}
+.lic-days-label{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px;margin-bottom:20px}
+.lic-input{width:100%;padding:14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:12px;font-size:16px;color:white;outline:none;text-align:center;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:12px}
+.lic-input::placeholder{color:rgba(255,255,255,.25);letter-spacing:1px;font-weight:400;font-size:13px;text-transform:none}
+.lic-input:focus{border-color:var(--amber)}
+.lic-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--amber),#d97706);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(245,158,11,.3)}
+.lic-btn:active{opacity:.85}
+.lic-err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;display:none}
+.lic-wa{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:10px 20px;background:#25D366;color:white;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none}
+.sub-warning-bar{background:var(--amber);color:var(--navy);padding:8px 16px;font-size:12px;font-weight:700;text-align:center;cursor:pointer;position:sticky;top:56px;z-index:99}
+#saLoginModal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
+#saLoginModal.open{display:flex}
+.sa-modal-box{background:white;border-radius:16px;padding:28px;max-width:300px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.sa-modal-title{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.sa-modal-sub{font-size:12px;color:var(--grey);margin-bottom:18px}
+.sa-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;outline:none}
+.sa-input:focus{border-color:var(--blue)}
+.sa-error{color:var(--red);font-size:12px;margin-bottom:10px;display:none}
+.sa-actions{display:flex;gap:8px;justify-content:flex-end}
+.sa-cancel{padding:8px 16px;background:#f0f0f0;color:var(--navy);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.sa-ok{padding:8px 16px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="offline-badge">📴 Offline Mode</div>
+<div class="loader" id="loader"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- SCREEN 1: AUTH -->
+<div id="authScreen" class="screen active">
+  <div class="auth-logo">
+    <div class="auth-logo-text">Chinexo<span>.</span></div>
+    <div class="auth-tagline">School Management · Works Offline</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuth('login')">School Login</div>
+      <div class="auth-tab" onclick="switchAuth('teacher')">Teacher Login</div>
+      <div class="auth-tab" onclick="switchAuth('register')">Register</div>
+    </div>
+    <div id="loginForm">
+      <label class="auth-label">School Phone</label>
+      <input class="auth-input" type="tel" id="loginId" placeholder="08012345678" autocomplete="username">
+      <label class="auth-label">Password</label>
+      <input class="auth-input" type="password" id="loginPass" placeholder="Password" onkeydown="if(event.key==='Enter')loginSchool()">
+      <button class="auth-btn" id="loginBtn" onclick="loginSchool()">Login →</button>
+      <div class="auth-error" id="loginError"></div>
+    </div>
+    <div id="teacherForm" style="display:none">
+      <label class="auth-label">Your Phone Number</label>
+      <input class="auth-input" type="tel" id="teacherPhone" placeholder="08012345678">
+      <label class="auth-label">Password</label>
+      <input class="auth-input" type="password" id="teacherPass" placeholder="Password" onkeydown="if(event.key==='Enter')loginTeacher()">
+      <button class="auth-btn" id="teacherBtn" onclick="loginTeacher()" style="background:linear-gradient(135deg,var(--purple),#6d28d9)">Login as Teacher →</button>
+      <div class="auth-error" id="teacherError"></div>
+    </div>
+    <div id="registerForm" style="display:none">
+      <label class="auth-label">School Name *</label>
+      <input class="auth-input" type="text" id="regName" placeholder="e.g. Royal Stars Academy" maxlength="100">
+      <label class="auth-label">School Address</label>
+      <input class="auth-input" type="text" id="regAddress" placeholder="e.g. Sokoto, Sokoto State" maxlength="200">
+      <label class="auth-label">Admin Phone (WhatsApp) *</label>
+      <input class="auth-input" type="tel" id="regPhone" placeholder="08012345678" maxlength="11">
+      <label class="auth-label">Email (optional)</label>
+      <input class="auth-input" type="email" id="regEmail" placeholder="school@email.com">
+      <label class="auth-label">Current Term</label>
+      <select class="auth-input" id="regTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select>
+      <label class="auth-label">Academic Session</label>
+      <input class="auth-input" type="text" id="regSession" placeholder="2025/2026" value="2025/2026" maxlength="12">
+      <label class="auth-label">Default Fee Per Term (₦)</label>
+      <input class="auth-input" type="number" id="regFee" placeholder="45000" min="0">
+      <label class="auth-label">Create Password * (min 8 chars)</label>
+      <input class="auth-input" type="password" id="regPass" placeholder="Min 8 characters">
+      <label class="auth-label">Confirm Password *</label>
+      <input class="auth-input" type="password" id="regPassConfirm" placeholder="Repeat password" onkeydown="if(event.key==='Enter')registerSchool()">
+      <button class="auth-btn" id="regBtn" onclick="registerSchool()" style="background:linear-gradient(135deg,var(--green),#16a34a)">Create School Account →</button>
+      <div class="auth-error" id="regError"></div>
+      <div class="auth-success" id="regSuccess"></div>
+    </div>
+  </div>
+  <div class="admin-link"><button onclick="openSALogin()">🔐 Super Admin</button></div>
+</div>
+
+<!-- SA Login Modal -->
+<div id="saLoginModal">
+  <div class="sa-modal-box">
+    <div class="sa-modal-title">Super Admin</div>
+    <div class="sa-modal-sub">Chinexo Platform Control</div>
+    <input type="text" id="saUser" placeholder="Username" class="sa-input" onkeydown="if(event.key==='Enter')document.getElementById('saPass2').focus()">
+    <input type="password" id="saPass2" placeholder="Password" class="sa-input" onkeydown="if(event.key==='Enter')loginSA()">
+    <div class="sa-error" id="saErr"></div>
+    <div class="sa-actions">
+      <button class="sa-cancel" onclick="closeSALogin()">Cancel</button>
+      <button class="sa-ok" onclick="loginSA()">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: SUPER ADMIN -->
+<div id="superAdminScreen" class="screen">
+  <div class="sa-header">
+    <div class="sa-title">Chinexo <span>Control</span></div>
+    <button class="logout-btn" onclick="logoutSA()">Logout</button>
+  </div>
+  <div class="sa-content">
+    <div class="sa-stats">
+      <div class="sa-stat-card"><div class="sa-stat-val blue" id="saStatSchools">—</div><div class="sa-stat-label">Schools</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-val green" id="saStatActive">—</div><div class="sa-stat-label">Active</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-val" id="saStatStudents">—</div><div class="sa-stat-label">Total Students</div></div>
+      <div class="sa-stat-card"><div class="sa-stat-val amber" id="saStatExpired">—</div><div class="sa-stat-label">Suspended</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="sa-btn success" onclick="exportAllData()">📤 Export All (JSON)</button>
+      <button class="sa-btn amber" onclick="document.getElementById('importFile').click()">📥 Import / Restore</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
+    </div>
+    <div class="sa-section-title">All Schools</div>
+    <div id="saSchoolList"></div>
+  </div>
+</div>
+
+<!-- SCREEN 3: MAIN APP -->
+<!-- LICENSE SCREEN -->
+<div id="licenseScreen" class="screen">
+  <div class="lic-card">
+    <div style="font-size:52px;margin-bottom:12px">🔒</div>
+    <div style="font-size:20px;font-weight:900;color:white;margin-bottom:8px">License Required</div>
+    <div class="lic-sub" id="licSubMsg">Your school license has expired or is not active.<br>Contact Chinexo to renew access.</div>
+    <input type="text" id="licKeyInput" placeholder="Enter License Key: CXXX-XXXX-XXXX-XXXX"
+      style="width:100%;padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:white;font-size:13px;font-family:monospace;letter-spacing:1px;text-align:center;outline:none;margin-bottom:10px;box-sizing:border-box"
+      oninput="this.value=this.value.toUpperCase()" maxlength="22">
+    <div id="licErr" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;text-align:left"></div>
+    <button onclick="activateLicense()" style="width:100%;padding:14px;background:#2368FE;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🔑 Activate License</button>
+    <button onclick="logout()" style="width:100%;padding:12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px">← Back to Login</button>
+    <div style="font-size:11px;color:rgba(255,255,255,.35);line-height:1.6">Need a license key? Contact Chinexo Support on WhatsApp:<br>
+      <a href="https://wa.me/2349138077497?text=I+need+a+Chinexo+license+key" target="_blank" style="color:#60a5fa;font-weight:700">+234 913 807 7497</a>
+    </div>
+    <div style="margin-top:16px;font-size:10px;color:rgba(255,255,255,.2)">Chinexo v3.0.0 · Offline School Management</div>
+  </div>
+</div>
+
+<div id="appScreen" class="screen">
+  <div class="app-header">
+    <div class="header-logo">Chinexo<span>.</span></div>
+    <div class="header-right">
+      <span class="role-pill admin" id="rolePill">Admin</span>
+      <div class="school-badge" id="headerSchoolName"></div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-hero">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <div id="dashLogo"><div style="width:56px;height:56px;background:rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px">🏫</div></div>
+        <div>
+          <div class="dash-hero-label">Welcome back</div>
+          <div class="dash-hero-school" id="dashSchoolName">School Name</div>
+        </div>
+      </div>
+      <div class="dash-hero-term" id="dashTerm">First Term • 2025/2026</div>
+      <div class="dash-hero-stats">
+        <div class="dash-stat"><div class="dash-stat-val" id="dashTotal">0</div><div class="dash-stat-label">Students</div></div>
+        <div class="dash-stat"><div class="dash-stat-val green" id="dashPaid">0</div><div class="dash-stat-label">Paid</div></div>
+        <div class="dash-stat"><div class="dash-stat-val red" id="dashOwing">0</div><div class="dash-stat-label">Owing</div></div>
+      </div>
+    </div>
+    <!-- COLLECTION PROGRESS CARD -->
+    <div class="collection-card">
+      <div class="collection-row">
+        <span class="collection-label">Fee Collection</span>
+        <span class="collection-pct" id="dashPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="dashProgress" style="width:0%"></div></div>
+      <div class="collection-amounts">
+        <span>Expected: <strong id="dashExpected">₦0</strong></span>
+        <span>Outstanding: <strong id="dashBalance" style="color:var(--red)">₦0</strong></span>
+      </div>
+    </div>
+
+    <!-- FEE SUMMARY ROW -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.06);text-align:center">
+        <div style="font-size:11px;color:var(--grey);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Collected</div>
+        <div style="font-size:20px;font-weight:800;color:var(--green)" id="dashCollected">₦0</div>
+      </div>
+      <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.06);text-align:center">
+        <div style="font-size:11px;color:var(--grey);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total Expected</div>
+        <div style="font-size:20px;font-weight:800;color:var(--navy)" id="dashExpectedCard">₦0</div>
+      </div>
+    </div>
+
+    <!-- TOP DEFAULTERS -->
+    <div class="section-header">
+      <div class="section-title">⚠️ Top Defaulters</div>
+      <button class="btn small outline" onclick="showPage('report')">View All</button>
+    </div>
+    <div id="dashDefaulters" style="margin-bottom:12px"></div>
+
+    <!-- RECENT PAYMENTS -->
+    <div class="section-header" style="margin-top:4px">
+      <div class="section-title">💳 Recent Payments</div>
+      <button class="btn small outline" onclick="showPage('payments')">View All</button>
+    </div>
+    <div id="recentPayments"></div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div class="page" id="page-students">
+    <div class="form-card" id="addStudentSection">
+      <div class="form-title">➕ Add Student</div>
+      <label class="form-label">Full Name *</label>
+      <input class="form-input" type="text" id="sName" placeholder="e.g. Amina Bello" maxlength="100">
+      <label class="form-label">Class *</label>
+      <input class="form-input" type="text" id="sClass" placeholder="e.g. JSS 2A" maxlength="30">
+      <label class="form-label">Gender *</label>
+      <select class="form-select" id="sGender">
+        <option value="">-- Select Gender --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+      <label class="form-label">Parent WhatsApp Number</label>
+      <input class="form-input" type="tel" id="sPhone" placeholder="08012345678" maxlength="11">
+      <label class="form-label">Fee This Term (₦) *</label>
+      <input class="form-input" type="number" id="sFee" placeholder="45000" min="0">
+      <label class="form-label">Terms Owed</label>
+      <select class="form-select" id="sTerms">
+        <option value="1">1 Term (current only)</option>
+        <option value="2">2 Terms (1 arrear)</option>
+        <option value="3">3 Terms (2 arrears)</option>
+      </select>
+      <button class="btn primary full" style="margin-top:16px" onclick="addStudent()">Add Student</button>
+    </div>
+    <div class="section-header"><div class="section-title">All Students (<span id="sCount">0</span>)</div></div>
+    <div id="studentOnboard"></div>
+    <input class="search-input" type="search" placeholder="Search name or class..." oninput="renderStudents()" id="sSearch">
+    <div class="pill-row">
+      <div class="pill active" onclick="setFilter('all',this)">All</div>
+      <div class="pill" onclick="setFilter('unpaid',this)">Unpaid</div>
+      <div class="pill" onclick="setFilter('partial',this)">Partial</div>
+      <div class="pill" onclick="setFilter('paid',this)">Paid</div>
+    </div>
+    <div id="studentList"></div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="page" id="page-payments">
+    <div class="form-card">
+      <div class="form-title">💳 Record Payment</div>
+      <label class="form-label">Select Student</label>
+      <select class="form-select" id="payStudent"><option value="">-- Select Student --</option></select>
+      <label class="form-label">Amount Paid (₦)</label>
+      <input class="form-input" type="number" id="payAmount" placeholder="Enter amount" min="1">
+      <label class="form-label">Payment Date</label>
+      <input class="form-input" type="date" id="payDate">
+      <label class="form-label">Payment Method</label>
+      <select class="form-select" id="payMethod"><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Cheque</option></select>
+      <label class="form-label">Notes (optional)</label>
+      <input class="form-input" type="text" id="payNotes" placeholder="e.g. First instalment" maxlength="120">
+      <button class="btn green full" style="margin-top:16px" onclick="recordPayment()">✅ Record Payment</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-title">Recent Payments</div>
+      <button class="btn small" style="background:var(--green);color:white" onclick="exportPaymentsCSV()">📊 Export CSV</button>
+    </div>
+    <div class="form-card" style="padding:4px 16px"><div id="payHistory"></div></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="page" id="page-results">
+    <div class="form-card">
+      <div class="form-title">📝 Enter Results</div>
+      <label class="form-label">Select Student</label>
+      <select class="form-select" id="resStudent" onchange="loadStudentResults()"><option value="">-- Select Student --</option></select>
+    </div>
+    <div class="form-card" id="subjectSection" style="display:none">
+      <div class="form-title">📚 Subject Scores</div>
+      <label class="form-label">Subject</label>
+      <input class="form-input" type="text" id="resSubject" placeholder="e.g. Mathematics" maxlength="60">
+      <label class="form-label">CA Score (out of 40)</label>
+      <input class="form-input" type="number" id="resCA" placeholder="0–40" max="40" min="0" oninput="calcTotal()">
+      <label class="form-label">Exam Score (out of 60)</label>
+      <input class="form-input" type="number" id="resExam" placeholder="0–60" max="60" min="0" oninput="calcTotal()">
+      <div id="totalPreview" style="display:none;margin-top:10px;background:var(--light);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--grey)">Total Score</div>
+        <div id="totalVal" style="font-size:28px;font-weight:800;color:var(--navy)">0</div>
+        <div id="gradeVal" style="font-size:13px;font-weight:700;margin-top:2px"></div>
+      </div>
+      <button class="btn primary full" style="margin-top:16px" onclick="saveResult()">Save Subject</button>
+    </div>
+    <div id="resultsSection" style="display:none">
+      <div class="section-title" style="margin-bottom:10px">Subjects Entered</div>
+      <div id="resultsList"></div>
+    </div>
+    <div class="form-card" id="affectiveSection" style="display:none">
+      <div class="form-title">🧠 Affective / Cognitive Report</div>
+      <div style="font-size:11px;color:var(--grey);margin-bottom:12px">Rate: 1=Poor 2=Fair 3=Good 4=Very Good 5=Excellent</div>
+      <div id="affectiveRatings"></div>
+      <button class="btn primary full" style="margin-top:14px" onclick="saveAffective()">Save Affective Ratings</button>
+    </div>
+    <div class="form-card" id="psychomotorSection" style="display:none">
+      <div class="form-title">⚽ Psychomotor Report</div>
+      <div style="font-size:11px;color:var(--grey);margin-bottom:12px">Rate: 1=Poor 2=Fair 3=Good 4=Very Good 5=Excellent</div>
+      <div id="psychomotorRatings"></div>
+      <button class="btn primary full" style="margin-top:14px" onclick="savePsychomotor()">Save Psychomotor Ratings</button>
+    </div>
+    <div class="form-card" id="commentsSection" style="display:none">
+      <div class="form-title">📋 Attendance &amp; Comments</div>
+      <label class="form-label">Times School Opened</label>
+      <input class="form-input" type="number" id="timesOpened" placeholder="e.g. 60" min="0">
+      <label class="form-label">Times Student Present</label>
+      <input class="form-input" type="number" id="timesPresent" placeholder="e.g. 58" min="0">
+      <label class="form-label">Class Teacher's Comment</label>
+      <textarea class="form-input" id="teacherComment" rows="3" placeholder="e.g. A hardworking student..." maxlength="500"></textarea>
+      <label class="form-label">Head Teacher's Comment</label>
+      <textarea class="form-input" id="headComment" rows="3" placeholder="e.g. Keep up the good work..." maxlength="500"></textarea>
+      <label class="form-label">Next Term Resumption Date</label>
+      <input class="form-input" type="text" id="resumptionDate" placeholder="e.g. 13th January 2026" maxlength="40">
+      <button class="btn primary full" style="margin-top:14px" onclick="saveComments()">Save Comments &amp; Attendance</button>
+    </div>
+    <div id="reportCardBtn" style="display:none;padding:0 0 16px">
+      <button class="btn full" style="background:linear-gradient(135deg,var(--navy),#1a2f6e);color:white;font-size:16px;padding:16px" onclick="generateReportCard()">🖨️ Generate Report Card</button>
+    </div>
+  </div>
+
+  <!-- REPORT PAGE -->
+  <div class="page" id="page-report">
+    <div class="form-card">
+      <div class="form-title">📋 Term Report</div>
+      <div id="reportSummary"></div>
+    </div>
+    <div class="section-header">
+      <div class="section-title">All Defaulters</div>
+      <button class="btn small" style="background:var(--green);color:white" onclick="sendAllReminders()">📱 Remind All</button>
+    </div>
+    <div id="reportDefaulters"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="form-card">
+      <div class="form-title">🏫 School Profile</div>
+      <label class="form-label">School Name</label>
+      <input class="form-input" type="text" id="settingsName" maxlength="100">
+      <label class="form-label">Address</label>
+      <input class="form-input" type="text" id="settingsAddress" maxlength="200">
+      <label class="form-label">Phone</label>
+      <input class="form-input" type="tel" id="settingsPhone" maxlength="11">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="settingsEmail">
+      <button class="btn primary full" style="margin-top:16px" onclick="saveSchoolProfile()">💾 Save Profile</button>
+    </div>
+    <div class="form-card">
+      <div class="form-title">📅 Term Settings</div>
+      <label class="form-label">Current Term</label>
+      <select class="form-select" id="settingsTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select>
+      <label class="form-label">Academic Session</label>
+      <input class="form-input" type="text" id="settingsSession" maxlength="12">
+      <label class="form-label">Default Fee Per Term (₦)</label>
+      <input class="form-input" type="number" id="settingsDefaultFee" min="0">
+      <button class="btn primary full" style="margin-top:16px" onclick="saveTermSettings()">💾 Save Term Settings</button>
+    </div>
+    <div class="form-card">
+      <div class="form-title">🔐 Change Password</div>
+      <label class="form-label">Current Password</label>
+      <input class="form-input" type="password" id="currentPass">
+      <label class="form-label">New Password (min 8 chars)</label>
+      <input class="form-input" type="password" id="newPass">
+      <label class="form-label">Confirm New Password</label>
+      <input class="form-input" type="password" id="confirmPass">
+      <button class="btn primary full" style="margin-top:16px" onclick="changePassword()">🔐 Change Password</button>
+    </div>
+    <div class="form-card" id="teacherMgmtSection" style="display:none">
+      <div class="form-title">👩‍🏫 Manage Teachers</div>
+      <label class="form-label">Teacher Full Name</label>
+      <input class="form-input" type="text" id="teacherName" maxlength="100">
+      <label class="form-label">Teacher Phone</label>
+      <input class="form-input" type="tel" id="teacherPhoneAdd" maxlength="11">
+      <label class="form-label">Class Assigned</label>
+      <input class="form-input" type="text" id="teacherClass" maxlength="30">
+      <label class="form-label">Password (min 8 chars)</label>
+      <input class="form-input" type="text" id="teacherPassword" maxlength="50" autocomplete="off">
+      <button class="btn primary full" style="margin-top:14px" onclick="addTeacher()">➕ Add Teacher</button>
+      <div style="margin-top:16px">
+        <div class="section-title" style="margin-bottom:8px">Teachers (<span id="teacherCount">0</span>)</div>
+        <div id="teacherList"></div>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="form-title">💾 Backup &amp; Restore</div>
+      <p style="font-size:13px;color:var(--grey);margin-bottom:12px">Export data as JSON for safekeeping. Restore from backup.</p>
+      <button class="btn outline full" style="margin-bottom:8px" onclick="exportSchoolData()">📤 Export My Data (JSON)</button>
+      <button class="btn outline full" onclick="document.getElementById('restoreFile').click()">📥 Restore from Backup</button>
+      <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreSchoolData(event)">
+    </div>
+    <div class="form-card">
+      <div class="form-title" style="color:var(--red)">⚠️ Danger Zone</div>
+      <p style="font-size:13px;color:var(--grey);margin-bottom:12px">Log out of your school account.</p>
+      <button class="btn danger full" onclick="logout()">🚪 Logout</button>
+      <div class="version-note">Chinexo v3.0.0 · Offline Edition · Built by Salt Oluyemi</div>
+    </div>
+  </div>
+
+  <!-- SYNC PAGE -->
+  <div class="page" id="page-sync">
+    <div class="onboard-banner" id="syncOnboard">
+      <div class="onboard-title">📲 How Chinexo Sync Works</div>
+      <div style="font-size:12px;color:#4338ca;line-height:1.6">All data lives on your device. To share with teachers or backup to another phone, use the steps below. No internet required.</div>
+    </div>
+    <div class="sync-warning">⚠️ Always export a backup before importing. Importing will replace existing data for this school.</div>
+    <div class="section-title" style="margin-bottom:12px">For Admin — Share Data with Teachers</div>
+    <div class="sync-step">
+      <div class="sync-step-num">1</div>
+      <div class="sync-step-body">
+        <div class="sync-step-title">Export Your Data</div>
+        <div class="sync-step-desc">Tap the button below. A JSON file will download to your phone.</div>
+        <button class="btn primary full" style="margin-top:10px" onclick="exportSchoolData()">📤 Export Data Now</button>
+      </div>
+    </div>
+    <div class="sync-step">
+      <div class="sync-step-num">2</div>
+      <div class="sync-step-body">
+        <div class="sync-step-title">Share via WhatsApp</div>
+        <div class="sync-step-desc">Open WhatsApp → find the teacher → tap Attach → Document → select the JSON file you just downloaded.</div>
+      </div>
+    </div>
+    <div class="sync-step">
+      <div class="sync-step-num">3</div>
+      <div class="sync-step-body">
+        <div class="sync-step-title">Teacher Imports on Their Device</div>
+        <div class="sync-step-desc">Teacher opens Chinexo → goes to Sync tab → taps "Import Data" → selects the file received from WhatsApp.</div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-bottom:12px;margin-top:8px">For Teachers — Receive &amp; Import Data</div>
+    <div class="sync-step">
+      <div class="sync-step-num">4</div>
+      <div class="sync-step-body">
+        <div class="sync-step-title">Import Received File</div>
+        <div class="sync-step-desc">Tap below, select the JSON file from admin. Your local data will be updated.</div>
+        <button class="btn outline full" style="margin-top:10px" onclick="document.getElementById('syncImportFile').click()">📥 Import Data File</button>
+        <input type="file" id="syncImportFile" accept=".json" style="display:none" onchange="restoreSchoolData(event)">
+      </div>
+    </div>
+    <div class="section-title" style="margin-bottom:12px;margin-top:8px">Backup Status</div>
+    <div class="form-card" id="syncStatusCard" style="padding:14px">
+      <div id="syncStatusContent"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><div class="nav-label">Dashboard</div></div>
+    <div class="nav-item" onclick="showPage('students')"><span class="nav-icon">👨‍🎓</span><div class="nav-label">Students</div></div>
+    <div class="nav-item" id="navPayments" onclick="showPage('payments')"><span class="nav-icon">💳</span><div class="nav-label">Payments</div></div>
+    <div class="nav-item" onclick="showPage('results')"><span class="nav-icon">📝</span><div class="nav-label">Results</div></div>
+    <div class="nav-item" onclick="showPage('sync')"><span class="nav-icon">🔄</span><div class="nav-label">Sync</div></div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="nav-icon">⚙️</span><div class="nav-label">Settings</div></div>
+  </div>
+</div>
+
+<!-- PAYMENT HISTORY MODAL -->
+<div class="modal-overlay" id="payHistoryModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="phStudentName">Payment History</div>
+    <div class="modal-sub" id="phStudentMeta"></div>
+    <div id="phList"></div>
+    <button class="btn outline full" style="margin-top:12px" onclick="$('payHistoryModal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="$('confirmOverlay').classList.remove('open')">Cancel</button>
+      <button class="confirm-ok" id="confirmOkBtn">Yes, proceed</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK PAY MODAL -->
+<div class="modal-overlay" id="quickPayModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Record Payment</div>
+    <div class="modal-sub" id="modalStudentInfo"></div>
+    <label class="form-label">Amount (₦)</label>
+    <input class="form-input" type="number" id="modalAmt" placeholder="Enter amount" min="1">
+    <label class="form-label">Method</label>
+    <select class="form-select" id="modalMethod"><option>Cash</option><option>Bank Transfer</option><option>POS</option></select>
+    <button class="btn green full" style="margin-top:16px" onclick="saveQuickPay()">✅ Confirm Payment</button>
+    <button class="btn outline full" style="margin-top:8px" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- RECEIPT MODAL -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="modal" style="max-height:92vh">
+    <div class="modal-handle"></div>
+    <div id="receiptContent"></div>
+    <button onclick="shareReceipt()" style="width:100%;padding:14px;background:#25D366;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px">📲 Share on WhatsApp</button>
+    <button onclick="printReceipt()" style="width:100%;padding:14px;background:#2368FE;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px">🖨️ Print Receipt</button>
+    <button onclick="closeReceipt()" style="width:100%;padding:12px;background:#f3f4f6;color:var(--navy);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">Close</button>
+  </div>
+</div>
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           CHINEXO v3.0.0 — PRODUCTION OFFLINE ENGINE        ║
+// ║      Structured JS · Full Features · Role-Based Access       ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ═══════════════════════════════════════════════════════
+// SECTION 1 — CONSTANTS & CONFIG
+// ═══════════════════════════════════════════════════════
+const SA_USER     = 'saltadmin';
+const SA_PASS     = 'Chinexo2025';
+const APP_VERSION = '3.0.0';
+const SUPPORT_WA  = '2349138077497';
+
+// ═══════════════════════════════════════════════════════
+// SECTION 2 — UTILITIES
+// ═══════════════════════════════════════════════════════
+const $  = id => document.getElementById(id);
+const fmt = n  => '₦' + Number(n || 0).toLocaleString('en-NG');
+
+function showLoader()  { $('loader').classList.add('on');    }
+function hideLoader()  { $('loader').classList.remove('on'); }
+
+function toast(msg, type = '') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className   = 'toast show ' + type;
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.className = 'toast'; }, 3400);
+}
+
+function showErr(id, msg) {
+  const el = $(id); if (!el) return;
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(el._tid);
+  el._tid = setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+function showSucc(id, msg) {
+  const el = $(id); if (!el) return;
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(el._tid);
+  el._tid = setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+function sanitize(str)       { return String(str || '').trim().replace(/[<>"'`;]/g, ''); }
+function validatePhone(p)    { return /^0[7-9][01]\d{8}$/.test(p); }
+function validatePassword(p) { return typeof p === 'string' && p.length >= 8; }
+function td()                { return new Date().toISOString().split('T')[0]; }
+function generateId()        { return Date.now().toString(36) + Math.random().toString(36).substr(2, 9); }
+
+function ordinal(n) {
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// Custom confirm dialog (replaces native confirm())
+function confirmAction(title, msg, onOk) {
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent   = msg;
+  $('confirmOverlay').classList.add('open');
+  const btn = $('confirmOkBtn');
+  btn.onclick = () => { $('confirmOverlay').classList.remove('open'); onOk(); };
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 3 — OFFLINE DATABASE LAYER
+// ═══════════════════════════════════════════════════════
+// Collections: cx_schools, cx_students, cx_payments,
+//              cx_results, cx_teachers, cx_licenses,
+//              cx_affective, cx_psychomotor, cx_comments
+// ───────────────────────────────────────────────────────
+const DB = {
+  get(key) {
+    try {
+      const d = localStorage.getItem(key);
+      return d ? JSON.parse(d) : [];
+    } catch(e) { return []; }
+  },
+  set(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); return true; }
+    catch(e) { console.error('DB.set failed:', key, e); return false; }
+  },
+  add(key, record) {
+    const arr = this.get(key);
+    arr.push(record);
+    return this.set(key, arr);
+  },
+  update(key, id, patch) {
+    const arr = this.get(key);
+    const i   = arr.findIndex(r => r.id === id);
+    if (i > -1) { arr[i] = { ...arr[i], ...patch }; this.set(key, arr); return arr[i]; }
+    return null;
+  },
+  delete(key, id) {
+    const arr = this.get(key).filter(r => r.id !== id);
+    this.set(key, arr);
+  },
+  find(key, predicate) {
+    return this.get(key).find(predicate) || null;
+  },
+  where(key, predicate) {
+    return this.get(key).filter(predicate);
+  }
+};
+
+// Shims for legacy code still using loadData/saveData
+function loadData(key)       { return DB.get(key);      }
+function saveData(key, data) { return DB.set(key, data); }
+
+// ═══════════════════════════════════════════════════════
+// SECTION 4 — PASSWORD HASHING  (FNV-1a style, offline)
+// ═══════════════════════════════════════════════════════
+function hashPassword(password) {
+  let hash = 2166136261;
+  const str = 'cx_salt_2025_' + password;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash  = (hash * 16777619) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0') + btoa(str.length + password.length).replace(/=/g, '');
+}
+function checkPassword(plain, hashed) {
+  return hashPassword(plain) === hashed || plain === hashed; // supports legacy plain-text
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 5 — APP STATE
+// ═══════════════════════════════════════════════════════
+let currentSchool  = null;
+let currentTeacher = null;
+let userRole       = null;   // 'admin' | 'teacher' | 'super_admin'
+
+let students  = [];
+let payments  = [];
+let results   = [];
+let teachers  = [];
+
+let quickPayId   = null;
+let activeFilter = 'all';
+let affData = {}, psyData = {}, comData = {};
+let receiptText = '';
+
+// ═══════════════════════════════════════════════════════
+// SECTION 6 — SESSION MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function persistSession(session) {
+  localStorage.setItem('cx_session', JSON.stringify(session));
+}
+function clearSession() {
+  localStorage.removeItem('cx_session');
+}
+function resumeSession() {
+  try {
+    const raw = localStorage.getItem('cx_session');
+    if (!raw) { showScreen('authScreen'); return; }
+    const s = JSON.parse(raw);
+
+    if (s.type === 'super_admin') {
+      userRole = 'super_admin';
+      showScreen('superAdminScreen');
+      loadSAData();
+      return;
+    }
+    if (s.type === 'admin' && s.schoolId) {
+      const school = DB.find('cx_schools', sc => sc.id === s.schoolId);
+      if (!school) { clearSession(); showScreen('authScreen'); return; }
+      userRole = 'admin';
+      startApp(school);
+      return;
+    }
+    if (s.type === 'teacher' && s.teacherId) {
+      const teacher = DB.find('cx_teachers', t => t.id === s.teacherId);
+      if (!teacher) { clearSession(); showScreen('authScreen'); return; }
+      const school = DB.find('cx_schools', sc => sc.id === teacher.school_id);
+      if (!school)  { clearSession(); showScreen('authScreen'); return; }
+      teacher.school = school;
+      currentTeacher = teacher;
+      userRole = 'teacher';
+      startTeacherApp(teacher);
+      return;
+    }
+    clearSession(); showScreen('authScreen');
+  } catch(e) { clearSession(); showScreen('authScreen'); }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 7 — SCREEN NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const t = $(name); if (t) t.classList.add('active');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = $('page-' + name);
+  if (page) page.classList.add('active');
+  // highlight nav icon
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + name + "'")) {
+      n.classList.add('active');
+    }
+  });
+  // page-specific renders
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'students')  { renderStudents(); populateStudentDropdowns(); }
+  if (name === 'payments')  { renderPayments(); populateStudentDropdowns(); }
+  if (name === 'results')   populateStudentDropdowns();
+  if (name === 'report')    renderReport();
+  if (name === 'sync')      renderSync();
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 8 — LICENSE SYSTEM
+// ═══════════════════════════════════════════════════════
+// License key format: CXXX-XXXX-XXXX-XXXX (uppercase alphanumeric)
+// Stored in cx_licenses: { school_id, key, expiry, activated_at, issued_by }
+
+function generateLicenseKey() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const seg   = () => Array.from({length:4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `CX${seg()}-${seg()}-${seg()}-${seg()}`;
+}
+
+function checkLicense(school) {
+  // Super admin always passes
+  if (userRole === 'super_admin') return { valid: true };
+
+  const lic = DB.find('cx_licenses', l => l.school_id === school.id && l.active);
+  if (!lic) return { valid: false, reason: 'no_license' };
+
+  const expiry  = new Date(lic.expiry);
+  const now     = new Date();
+  const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+  if (daysLeft <= 0) return { valid: false, reason: 'expired', daysLeft };
+  return { valid: true, daysLeft, lic };
+}
+
+function showLicenseScreen(school) {
+  // Inject school name into the license screen
+  const card = document.querySelector('#licenseScreen .lic-card');
+  if (card) {
+    const sub = card.querySelector('.lic-sub');
+    if (sub) sub.innerHTML = `<strong style="color:white">${school.name}</strong><br>Your license has expired or is not active.<br>Contact Chinexo to renew access.`;
+  }
+  showScreen('licenseScreen');
+}
+
+function activateLicense() {
+  const key = sanitize($('licKeyInput').value).toUpperCase().replace(/\s/g, '');
+  const err = $('licErr');
+  err.style.display = 'none';
+  if (!key) { err.textContent = 'Enter your license key.'; err.style.display = 'block'; return; }
+
+  // Find a pending license matching this key
+  const allLics = DB.get('cx_licenses');
+  const match   = allLics.find(l => l.key === key && !l.active);
+  if (!match) {
+    err.textContent = 'Invalid or already-used key. Contact Chinexo.';
+    err.style.display = 'block';
+    return;
+  }
+  // Activate it for current school (the one that tried to log in)
+  const raw = localStorage.getItem('cx_pending_school');
+  if (!raw) { err.textContent = 'Session error. Please log in again.'; err.style.display = 'block'; return; }
+  const school = JSON.parse(raw);
+  DB.update('cx_licenses', match.id, { school_id: school.id, active: true, activated_at: new Date().toISOString() });
+  localStorage.removeItem('cx_pending_school');
+  toast('✅ License activated! Welcome to Chinexo.', 'success');
+  setTimeout(() => { userRole = 'admin'; startApp(school); }, 900);
+}
+
+// SA: Issue a new license key
+function issueLicense(schoolId, daysFromNow) {
+  const expiry = new Date(Date.now() + daysFromNow * 864e5).toISOString();
+  const key    = generateLicenseKey();
+  const lic    = {
+    id:           generateId(),
+    school_id:    schoolId,
+    key,
+    expiry,
+    active:       true,        // SA-issued licenses are immediately active
+    activated_at: new Date().toISOString(),
+    issued_by:    'super_admin'
+  };
+  DB.add('cx_licenses', lic);
+  return lic;
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 9 — AUTH
+// ═══════════════════════════════════════════════════════
+function switchAuth(tab) {
+  $('loginForm').style.display    = tab === 'login'    ? 'block' : 'none';
+  $('teacherForm').style.display  = tab === 'teacher'  ? 'block' : 'none';
+  $('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((el, i) => {
+    el.classList.toggle('active',
+      (tab === 'login'    && i === 0) ||
+      (tab === 'teacher'  && i === 1) ||
+      (tab === 'register' && i === 2)
+    );
+  });
+  ['loginError','teacherError','regError','regSuccess'].forEach(id => {
+    const el = $(id); if (el) el.style.display = 'none';
+  });
+}
+
+function loginSchool() {
+  const identifier = sanitize($('loginId').value);
+  const password   = $('loginPass').value;
+  if (!identifier || !password) { showErr('loginError', 'Enter phone and password.'); return; }
+  showLoader();
+  try {
+    const school = DB.find('cx_schools', s => s.phone === identifier || s.email === identifier);
+    if (!school)                        { showErr('loginError', 'Phone not found. Register first.');            return; }
+    if (school.status === 'suspended')  { showErr('loginError', '⚠️ Account suspended. Contact Chinexo.');    return; }
+    if (!checkPassword(password, school.password)) { showErr('loginError', 'Wrong password.');                return; }
+
+    // License check
+    const licResult = checkLicense(school);
+    if (!licResult.valid) {
+      localStorage.setItem('cx_pending_school', JSON.stringify(school));
+      hideLoader();
+      showLicenseScreen(school);
+      return;
+    }
+
+    // Warn if expiring soon (within 7 days)
+    if (licResult.daysLeft && licResult.daysLeft <= 7) {
+      toast(`⚠️ License expires in ${licResult.daysLeft} day(s)!`, '');
+    }
+
+    persistSession({ type: 'admin', schoolId: school.id });
+    userRole = 'admin';
+    startApp(school);
+  } catch(e) { showErr('loginError', 'Error. Try again.'); }
+  finally { hideLoader(); }
+}
+
+function loginTeacher() {
+  const phone    = sanitize($('teacherPhone').value);
+  const password = $('teacherPass').value;
+  if (!phone || !password) { showErr('teacherError', 'Enter phone and password.'); return; }
+  showLoader();
+  try {
+    const teacher = DB.find('cx_teachers', t => t.phone === phone && checkPassword(password, t.password));
+    if (!teacher) { showErr('teacherError', 'Wrong phone or password.'); return; }
+    const school = DB.find('cx_schools', s => s.id === teacher.school_id);
+    if (!school)  { showErr('teacherError', 'School not found.');        return; }
+    if (school.status === 'suspended') { showErr('teacherError', '⚠️ School account suspended.'); return; }
+
+    teacher.school  = school;
+    currentTeacher  = teacher;
+    persistSession({ type: 'teacher', teacherId: teacher.id });
+    userRole = 'teacher';
+    startTeacherApp(teacher);
+  } catch(e) { showErr('teacherError', 'Error. Try again.'); }
+  finally { hideLoader(); }
+}
+
+function registerSchool() {
+  const name    = sanitize($('regName').value);
+  const address = sanitize($('regAddress').value);
+  const phone   = sanitize($('regPhone').value);
+  const email   = sanitize($('regEmail').value);
+  const term    = $('regTerm').value;
+  const session = sanitize($('regSession').value) || '2025/2026';
+  const fee     = Math.max(0, Number($('regFee').value) || 0);
+  const password = $('regPass').value;
+  const confirm  = $('regPassConfirm').value;
+
+  if (!name)                             { showErr('regError', 'School name is required.');                        return; }
+  if (!phone)                            { showErr('regError', 'Admin phone is required.');                        return; }
+  if (!validatePhone(phone))             { showErr('regError', 'Enter valid 11-digit Nigerian phone.');            return; }
+  if (!validatePassword(password))       { showErr('regError', 'Password must be at least 8 characters.');        return; }
+  if (password !== confirm)              { showErr('regError', 'Passwords do not match.');                         return; }
+  if (DB.find('cx_schools', s => s.phone === phone)) { showErr('regError', 'Phone already registered. Use School Login.'); return; }
+
+  showLoader();
+  try {
+    const school = {
+      id:           generateId(),
+      name, address, phone, email, term, session,
+      default_fee:  fee,
+      password:     hashPassword(password),
+      status:       'active',
+      version:      APP_VERSION,
+      created_at:   new Date().toISOString()
+    };
+    DB.add('cx_schools', school);
+
+    // Auto-issue a 30-day trial license for new registrations
+    issueLicense(school.id, 30);
+
+    persistSession({ type: 'admin', schoolId: school.id });
+    userRole = 'admin';
+    showSucc('regSuccess', '✅ School registered! 30-day trial started. Logging you in…');
+    setTimeout(() => startApp(school), 900);
+  } catch(e) { showErr('regError', 'Error registering. Try again.'); }
+  finally { hideLoader(); }
+}
+
+function logout() {
+  clearSession();
+  currentSchool = null; currentTeacher = null; userRole = null;
+  students = []; payments = []; results = []; teachers = [];
+  showScreen('authScreen');
+  // Reset auth tabs to login
+  switchAuth('login');
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 10 — SUPER ADMIN
+// ═══════════════════════════════════════════════════════
+function openSALogin()  { $('saLoginModal').classList.add('open');    }
+function closeSALogin() { $('saLoginModal').classList.remove('open'); }
+
+function loginSA() {
+  const u = $('saUser').value.trim();
+  const p = $('saPass2').value;
+  if (u !== SA_USER || p !== SA_PASS) {
+    $('saErr').textContent = 'Invalid credentials.';
+    $('saErr').style.display = 'block';
+    return;
+  }
+  closeSALogin();
+  persistSession({ type: 'super_admin' });
+  userRole = 'super_admin';
+  showScreen('superAdminScreen');
+  loadSAData();
+}
+function logoutSA() { clearSession(); showScreen('authScreen'); }
+
+function loadSAData() {
+  const schools     = DB.get('cx_schools');
+  const allStudents = DB.get('cx_students');
+  const allLics     = DB.get('cx_licenses');
+
+  const activeCount    = schools.filter(s => s.status !== 'suspended').length;
+  const suspendedCount = schools.filter(s => s.status === 'suspended').length;
+
+  $('saStatSchools').textContent  = schools.length;
+  $('saStatActive').textContent   = activeCount;
+  $('saStatStudents').textContent = allStudents.length;
+  $('saStatExpired').textContent  = suspendedCount;
+
+  // Render school list
+  $('saSchoolList').innerHTML = !schools.length
+    ? '<div style="text-align:center;color:rgba(255,255,255,.4);padding:40px 0;font-size:14px">No schools registered yet.</div>'
+    : schools.map(sc => {
+        const lic        = allLics.filter(l => l.school_id === sc.id && l.active).sort((a,b) => new Date(b.activated_at) - new Date(a.activated_at))[0];
+        const stuCount   = allStudents.filter(s => s.school_id === sc.id).length;
+        const payments   = DB.get('cx_payments').filter(p => p.school_id === sc.id);
+        const totalPaid  = payments.reduce((a, p) => a + Number(p.amount), 0);
+        const suspended  = sc.status === 'suspended';
+
+        let licBadge = '<span class="sub-badge exp">No License</span>';
+        let daysLeft  = 0;
+        if (lic) {
+          daysLeft = Math.ceil((new Date(lic.expiry) - new Date()) / 864e5);
+          if (daysLeft > 7)      licBadge = `<span class="sub-badge ok">✅ ${daysLeft}d left</span>`;
+          else if (daysLeft > 0) licBadge = `<span class="sub-badge sus">⚠️ ${daysLeft}d left</span>`;
+          else                   licBadge = `<span class="sub-badge exp">Expired</span>`;
+        }
+
+        return `<div class="school-list-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="school-item-name">${sc.name} ${suspended ? '<span class="sub-badge sus">SUSPENDED</span>' : ''}</div>
+            ${licBadge}
+          </div>
+          <div class="school-item-meta">📱 ${sc.phone || '—'} · 📅 ${sc.term} ${sc.session} · v${sc.version || '?'}</div>
+          <div class="school-item-stats">
+            <div class="school-stat"><strong>${stuCount}</strong>Students</div>
+            <div class="school-stat"><strong>${fmt(totalPaid)}</strong>Collected</div>
+            <div class="school-stat"><strong>${sc.created_at ? sc.created_at.split('T')[0] : '—'}</strong>Registered</div>
+          </div>
+          <div class="school-item-actions">
+            <button class="sa-btn primary" onclick="saIssueLicense('${sc.id}')">🔑 Issue License</button>
+            ${suspended
+              ? `<button class="sa-btn success" onclick="saToggleSchool('${sc.id}','active')">✅ Activate</button>`
+              : `<button class="sa-btn danger"  onclick="saToggleSchool('${sc.id}','suspended')">🚫 Suspend</button>`}
+            <button class="sa-btn amber" onclick="saViewLicenses('${sc.id}')">📋 Licenses</button>
+          </div>
+          <div id="sa-lic-detail-${sc.id}" style="display:none;margin-top:10px"></div>
+        </div>`;
+      }).join('');
+}
+
+function saToggleSchool(schoolId, newStatus) {
+  const label = newStatus === 'suspended' ? 'suspend' : 'activate';
+  confirmAction(
+    label === 'suspend' ? 'Suspend School' : 'Activate School',
+    `Are you sure you want to ${label} this school?`,
+    () => {
+      DB.update('cx_schools', schoolId, { status: newStatus });
+      toast(`School ${label}d.`, newStatus === 'active' ? 'success' : 'error');
+      loadSAData();
+    }
+  );
+}
+
+function saIssueLicense(schoolId) {
+  const school = DB.find('cx_schools', s => s.id === schoolId);
+  if (!school) return;
+  // Prompt for days
+  const input = prompt(`Issue license to "${school.name}".\n\nEnter number of days (e.g. 30, 90, 365):`);
+  const days  = parseInt(input);
+  if (!days || days < 1) { toast('Invalid number of days.', 'error'); return; }
+  const lic = issueLicense(schoolId, days);
+  toast(`✅ License issued! Key: ${lic.key}`, 'success');
+  // Show key in a copyable way
+  confirmAction(
+    '🔑 License Key Issued',
+    `School: ${school.name}\nKey: ${lic.key}\nExpiry: ${days} days\n\nShare this key with the school admin.`,
+    () => loadSAData()
+  );
+  loadSAData();
+}
+
+function saViewLicenses(schoolId) {
+  const panel = $(`sa-lic-detail-${schoolId}`);
+  if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+  const lics = DB.where('cx_licenses', l => l.school_id === schoolId);
+  if (!lics.length) { panel.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.4);padding:8px 0">No licenses issued.</div>'; }
+  else {
+    panel.innerHTML = lics.map(l => {
+      const daysLeft = Math.ceil((new Date(l.expiry) - new Date()) / 864e5);
+      const color    = daysLeft > 7 ? 'var(--green)' : daysLeft > 0 ? 'var(--amber)' : 'var(--red)';
+      return `<div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px">
+        <div style="color:white;font-weight:700;letter-spacing:1px">${l.key}</div>
+        <div style="color:rgba(255,255,255,.5);margin-top:3px">
+          Issued: ${l.activated_at ? l.activated_at.split('T')[0] : '—'} · 
+          Expires: ${l.expiry ? l.expiry.split('T')[0] : '—'} · 
+          <span style="color:${color}">${daysLeft > 0 ? daysLeft + 'd left' : 'EXPIRED'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  panel.style.display = 'block';
+}
+
+function exportAllData() {
+  const data = {
+    export_date:  new Date().toISOString(),
+    app_version:  APP_VERSION,
+    schools:      DB.get('cx_schools'),
+    students:     DB.get('cx_students'),
+    payments:     DB.get('cx_payments'),
+    results:      DB.get('cx_results'),
+    teachers:     DB.get('cx_teachers'),
+    licenses:     DB.get('cx_licenses'),
+    affective:    DB.get('cx_affective'),
+    psychomotor:  DB.get('cx_psychomotor'),
+    comments:     DB.get('cx_comments')
+  };
+  downloadJSON(data, 'chinexo_FULL_backup_' + td() + '.json');
+  toast('✅ Full export saved!', 'success');
+}
+
+function doImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (!d.schools) { toast('Invalid backup file.', 'error'); return; }
+      confirmAction('⚠️ Restore All Data', 'This will REPLACE all existing Chinexo data on this device. Continue?', () => {
+        ['schools','students','payments','results','teachers','licenses','affective','psychomotor','comments'].forEach(k => {
+          if (d[k]) DB.set('cx_' + k, d[k]);
+        });
+        toast('✅ Data restored! Reloading…', 'success');
+        setTimeout(() => location.reload(), 1200);
+      });
+    } catch(err) { toast('Error reading file.', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 11 — APP STARTUP
+// ═══════════════════════════════════════════════════════
+function startApp(school) {
+  currentSchool = school;
+
+  // Role-based UI restrictions
+  const isAdmin   = userRole === 'admin';
+  const isTeacher = userRole === 'teacher';
+
+  $('rolePill').textContent  = isAdmin ? 'Admin' : 'Teacher';
+  $('rolePill').className    = 'role-pill ' + (isAdmin ? 'admin' : 'teacher');
+  $('headerSchoolName').textContent = school.name;
+
+  // Hide payment nav for teachers
+  const navPay = $('navPayments');
+  if (navPay) navPay.style.display = isTeacher ? 'none' : '';
+
+  // Hide teacher management section for teachers
+  const tMgmt = $('teacherMgmtSection');
+  if (tMgmt) tMgmt.style.display = isAdmin ? 'block' : 'none';
+
+  // License warning bar
+  const licResult = checkLicense(school);
+  if (licResult.valid && licResult.daysLeft && licResult.daysLeft <= 7) {
+    let bar = $('licWarningBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'licWarningBar';
+      bar.className = 'sub-warning-bar';
+      bar.onclick = () => bar.remove();
+      const appHeader = document.querySelector('#appScreen .app-header');
+      if (appHeader) appHeader.after(bar);
+    }
+    bar.textContent = `⚠️ License expires in ${licResult.daysLeft} day(s). Tap to dismiss. Contact Chinexo to renew.`;
+  }
+
+  loadAppData();
+  showScreen('appScreen');
+  showPage('dashboard');
+}
+
+function startTeacherApp(teacher) {
+  currentSchool = teacher.school;
+  startApp(teacher.school);
+}
+
+function loadAppData() {
+  if (!currentSchool) return;
+  const sid = currentSchool.id;
+  students = DB.where('cx_students', s => s.school_id === sid);
+  payments = DB.where('cx_payments', p => p.school_id === sid);
+  results  = DB.where('cx_results',  r => r.school_id === sid);
+  teachers = DB.where('cx_teachers', t => t.school_id === sid);
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 12 — DOMAIN HELPERS
+// ═══════════════════════════════════════════════════════
+function getBalance(s) {
+  const owed    = s.fee * (s.terms_owed || 1);
+  const paid    = payments.filter(p => p.student_id === s.id).reduce((a, p) => a + Number(p.amount), 0);
+  return { owed, paid, balance: owed - paid };
+}
+function getStatus(s) {
+  const { owed, paid, balance } = getBalance(s);
+  if (balance <= 0) return 'paid';
+  if (paid > 0)     return 'partial';
+  return 'unpaid';
+}
+function getGrade(t) {
+  if (t >= 75) return { g: 'A1', r: 'Excellent', c: '#16a34a' };
+  if (t >= 70) return { g: 'B2', r: 'Good',      c: '#2563eb' };
+  if (t >= 65) return { g: 'B3', r: 'Good',      c: '#2563eb' };
+  if (t >= 60) return { g: 'C4', r: 'Credit',    c: '#0891b2' };
+  if (t >= 55) return { g: 'C5', r: 'Credit',    c: '#0891b2' };
+  if (t >= 50) return { g: 'C6', r: 'Credit',    c: '#0891b2' };
+  if (t >= 45) return { g: 'D7', r: 'Pass',      c: '#b45309' };
+  if (t >= 40) return { g: 'E8', r: 'Pass',      c: '#b45309' };
+  return { g: 'F9', r: 'Fail', c: '#dc2626' };
+}
+function waMsg(s) {
+  const { balance } = getBalance(s);
+  return `Dear Parent/Guardian,\n\nThis is a reminder from *${currentSchool.name}*.\nYour ward *${s.name}* has an outstanding fee balance of *${fmt(balance)}* for *${currentSchool.term} ${currentSchool.session}*.\n\nKindly make payment at the earliest convenience.\n\nThank you.\n_Powered by Chinexo_`;
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 13 — ONBOARDING
+// ═══════════════════════════════════════════════════════
+function maybeShowOnboarding(containerId) {
+  const el = $(containerId); if (!el) return;
+  if (students.length === 0) {
+    el.innerHTML = `<div class="onboard-banner">
+      <div class="onboard-title">👋 Getting Started</div>
+      <div class="onboard-steps">
+        <div class="onboard-step"><div class="dot">1</div> Go to <strong>Settings</strong> and complete your school profile</div>
+        <div class="onboard-step"><div class="dot">2</div> Add your first <strong>Student</strong> using the form above</div>
+        <div class="onboard-step"><div class="dot">3</div> Record <strong>Payments</strong> as fees are collected</div>
+        <div class="onboard-step"><div class="dot">4</div> Enter <strong>Results</strong> at end of term</div>
+        <div class="onboard-step"><div class="dot">5</div> Use <strong>Sync</strong> tab to backup &amp; share data</div>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 14 — DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard() {
+  if (!currentSchool) return;
+
+  $('dashSchoolName').textContent = currentSchool.name;
+  $('dashTerm').textContent       = (currentSchool.term || '') + ' • ' + (currentSchool.session || '');
+
+  const total    = students.length;
+  const paidC    = students.filter(s => getStatus(s) === 'paid').length;
+  const owingC   = students.filter(s => getStatus(s) !== 'paid').length;
+  const expected = students.reduce((a, s) => a + s.fee * (s.terms_owed || 1), 0);
+  const collected = payments.reduce((a, p) => a + Number(p.amount), 0);
+  const outstanding = Math.max(0, expected - collected);
+  const pct      = expected > 0 ? Math.min(100, Math.round(collected / expected * 100)) : 0;
+
+  $('sCount').textContent       = total;
+  $('dashTotal').textContent    = total;
+  $('dashPaid').textContent     = paidC;
+  $('dashOwing').textContent    = owingC;
+  $('dashExpected').textContent  = fmt(expected);
+  $('dashCollected').textContent = fmt(collected);
+  $('dashBalance').textContent   = fmt(outstanding);
+  $('dashPct').textContent       = pct + '%';
+  $('dashProgress').style.width  = pct + '%';
+  // also fill the summary card
+  const expCard = $('dashExpectedCard');
+  if (expCard) expCard.textContent = fmt(expected);
+
+  // Top 3 defaulters (highest balance first)
+  const defaulterEl = $('dashDefaulters');
+  if (defaulterEl) {
+    const owing = students
+      .filter(s => getStatus(s) !== 'paid')
+      .map(s => ({ s, bal: getBalance(s).balance }))
+      .sort((a, b) => b.bal - a.bal)
+      .slice(0, 3);
+    if (!owing.length) {
+      defaulterEl.innerHTML = '<div style="background:#f0fdf4;border-radius:12px;padding:14px 16px;text-align:center;color:#16a34a;font-size:13px;font-weight:600;margin-bottom:12px">🎉 All students are fully paid!</div>';
+    } else {
+      defaulterEl.innerHTML = owing.map(({ s, bal }) => {
+        const status = getStatus(s);
+        return `<div style="background:white;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center;border-left:4px solid ${status==='unpaid'?'var(--red)':'var(--amber)'}">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--navy)">${s.name}</div>
+            <div style="font-size:11px;color:var(--grey)">${s.student_class||'—'} · <span style="color:${status==='unpaid'?'var(--red)':'var(--amber)'};font-weight:600">${status==='unpaid'?'Not Paid':'Partial'}</span></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:16px;font-weight:800;color:var(--red)">${fmt(bal)}</div>
+            <div style="font-size:10px;color:var(--grey)">balance</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Recent payments (last 5)
+  const recent = [...payments]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
+  const recentEl = $('recentPayments');
+  if (recentEl) {
+    recentEl.innerHTML = recent.length
+      ? recent.map(p => {
+          const s = students.find(x => x.id === p.student_id);
+          return `<div class="pay-item">
+            <div><div class="pay-name">${s ? s.name : 'Unknown'}</div>
+            <div class="pay-meta">${s ? (s.student_class || '') : ''} · ${p.payment_date || td()} · ${p.payment_method || 'Cash'}</div></div>
+            <div class="pay-amount">${fmt(p.amount)}</div>
+          </div>`;
+        }).join('')
+      : '<div class="empty" style="padding:20px 0"><div class="empty-icon" style="font-size:28px">💳</div><div class="empty-text">No payments yet.</div></div>';
+  }
+
+  // Settings prefill
+  if ($('settingsName'))       $('settingsName').value       = currentSchool.name    || '';
+  if ($('settingsAddress'))    $('settingsAddress').value    = currentSchool.address || '';
+  if ($('settingsPhone'))      $('settingsPhone').value      = currentSchool.phone   || '';
+  if ($('settingsEmail'))      $('settingsEmail').value      = currentSchool.email   || '';
+  if ($('settingsTerm'))       $('settingsTerm').value       = currentSchool.term    || 'First Term';
+  if ($('settingsSession'))    $('settingsSession').value    = currentSchool.session || '2025/2026';
+  if ($('settingsDefaultFee')) $('settingsDefaultFee').value = currentSchool.default_fee || '';
+  if ($('sFee'))               $('sFee').value               = currentSchool.default_fee || '';
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 15 — STUDENTS
+// ═══════════════════════════════════════════════════════
+function addStudent() {
+  const name  = sanitize($('sName').value);
+  const cls   = sanitize($('sClass').value);
+  const gender = $('sGender').value;
+  const phone = sanitize($('sPhone').value);
+  const fee   = Math.max(0, Number($('sFee').value) || 0);
+  const terms = Math.min(6, Math.max(1, Number($('sTerms').value) || 1));
+
+  if (!name)   { toast('Student name is required', 'error'); return; }
+  if (!cls)    { toast('Class is required',        'error'); return; }
+  if (!gender) { toast('Please select gender',     'error'); return; }
+  if (!fee)    { toast('Fee amount is required',   'error'); return; }
+  if (phone && !validatePhone(phone)) { toast('Enter valid 11-digit phone', 'error'); return; }
+
+  showLoader();
+  try {
+    const student = {
+      id:           generateId(),
+      school_id:    currentSchool.id,
+      name, gender,
+      student_class: cls,
+      parent_phone:  phone || null,
+      fee, terms_owed: terms,
+      created_at:    new Date().toISOString()
+    };
+    DB.add('cx_students', student);
+    students.push(student);
+
+    $('sName').value  = '';
+    $('sClass').value = '';
+    $('sPhone').value = '';
+    $('sGender').value = '';
+    $('sFee').value   = currentSchool.default_fee || '';
+    $('sTerms').value = '1';
+
+    renderStudents();
+    renderDashboard();
+    populateStudentDropdowns();
+    toast('✅ ' + student.name + ' added!', 'success');
+  } finally { hideLoader(); }
+}
+
+function renderStudents() {
+  const q = ($('sSearch')?.value || '').toLowerCase();
+  let list = students.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    (s.student_class || '').toLowerCase().includes(q)
+  );
+  if (activeFilter !== 'all') list = list.filter(s => getStatus(s) === activeFilter);
+
+  $('sCount').textContent = students.length;
+  const ob = $('studentOnboard');
+  if (ob) maybeShowOnboarding('studentOnboard');
+
+  if (!list.length) {
+    $('studentList').innerHTML = students.length === 0
+      ? '<div class="empty"><div class="empty-icon">👨‍🎓</div><div class="empty-text">No students yet.<br><small style="font-size:12px;color:var(--grey)">Use the form above to add your first student.</small></div></div>'
+      : '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No students match this filter.</div></div>';
+    return;
+  }
+
+  // Group by class
+  const groups = {};
+  list.forEach(s => {
+    const cls = s.student_class || 'No Class';
+    if (!groups[cls]) groups[cls] = [];
+    groups[cls].push(s);
+  });
+  const sortedClasses = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+  const gIcon = g => g === 'Male' ? '👦' : '👧';
+
+  $('studentList').innerHTML = sortedClasses.map(cls => {
+    const grp     = groups[cls];
+    const males   = grp.filter(s => s.gender === 'Male').length;
+    const females = grp.filter(s => s.gender === 'Female').length;
+
+    const cards = grp.map(s => {
+      const { owed, paid, balance } = getBalance(s);
+      const status   = getStatus(s);
+      const pct      = owed > 0 ? Math.min(100, Math.round(paid / owed * 100)) : 100;
+      const payCount = payments.filter(p => p.student_id === s.id).length;
+
+      const genderTag = s.gender
+        ? `<span style="background:${s.gender==='Male'?'#dbeafe':'#fce7f3'};color:${s.gender==='Male'?'#1d4ed8':'#be185d'};font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px">${gIcon(s.gender)} ${s.gender}</span>`
+        : '';
+      const termsTag = s.terms_owed > 1
+        ? `<span style="background:#fee2e2;color:#dc2626;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px">${s.terms_owed} terms</span>`
+        : '';
+
+      return `<div class="student-card ${status}">
+        <div class="student-top">
+          <div><div class="student-name">${s.name}${termsTag}${genderTag}</div></div>
+          <span class="badge ${status}">${status==='paid'?'✅ Paid':status==='partial'?'⏳ Partial':'❌ Unpaid'}</span>
+        </div>
+        <div class="fee-row"><span>Total Owed</span><strong>${fmt(owed)}</strong></div>
+        <div class="fee-row"><span>Paid</span><strong style="color:var(--green)">${fmt(paid)}</strong></div>
+        <div class="fee-row"><span>Balance</span><strong style="color:var(--red)">${fmt(balance)}</strong></div>
+        <div class="mini-progress"><div class="mini-fill ${status}" style="width:${pct}%"></div></div>
+        <div class="student-actions">
+          ${userRole!=='teacher' && status!=='paid' ? `<button class="btn small primary" onclick="openQuickPay('${s.id}')">💳 Pay</button>` : ''}
+          ${payCount > 0 ? `<button class="btn small outline" onclick="viewPayHistory('${s.id}')">🧾 ${payCount}</button>` : ''}
+          ${s.parent_phone ? `<a class="wa-btn" href="https://wa.me/234${s.parent_phone.replace(/^0/,'')}?text=${encodeURIComponent(waMsg(s))}" target="_blank">📱 Remind</a>` : ''}
+          ${userRole==='admin' ? `<button class="btn small danger" onclick="confirmDeleteStudent('${s.id}')">🗑️</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:white;border-radius:10px;padding:9px 14px;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:800;letter-spacing:.3px">📚 ${cls}</div>
+        <div style="display:flex;gap:8px;font-size:11px;font-weight:700">
+          <span style="background:rgba(255,255,255,.12);padding:2px 9px;border-radius:10px">${grp.length} students</span>
+          ${males   > 0 ? `<span style="background:#1d4ed8;padding:2px 8px;border-radius:10px">👦 ${males}</span>`   : ''}
+          ${females > 0 ? `<span style="background:#be185d;padding:2px 8px;border-radius:10px">👧 ${females}</span>` : ''}
+        </div>
+      </div>
+      ${cards}
+    </div>`;
+  }).join('');
+}
+
+function filterStudents(status) {
+  activeFilter = status;
+  document.querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('active', p.textContent.toLowerCase().replace('✅ ','').replace('⏳ ','').replace('❌ ','').trim() === status || (status === 'all' && p.textContent.trim() === 'All'));
+  });
+  renderStudents();
+}
+
+function confirmDeleteStudent(id) {
+  const s = students.find(x => x.id === id);
+  confirmAction('Delete Student', `Remove ${s ? s.name : 'this student'} and all their payment records? This cannot be undone.`, () => {
+    DB.delete('cx_students', id);
+    DB.set('cx_payments', DB.get('cx_payments').filter(p => p.student_id !== id));
+    students  = students.filter(s => s.id !== id);
+    payments  = payments.filter(p => p.student_id !== id);
+    renderStudents();
+    renderDashboard();
+    populateStudentDropdowns();
+    toast('Student removed.', 'success');
+  });
+}
+
+function populateStudentDropdowns() {
+  // Group students by class, classes sorted alphabetically
+  // Within each class, students sorted by name
+  const groups = {};
+  [...students]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(s => {
+      const cls = s.student_class || 'No Class';
+      if (!groups[cls]) groups[cls] = [];
+      groups[cls].push(s);
+    });
+
+  const sortedClasses = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+
+  const opts = '<option value="">— Select Student —</option>' +
+    sortedClasses.map(cls =>
+      `<optgroup label="📚 ${cls}">` +
+      groups[cls].map(s =>
+        `<option value="${s.id}">${s.name}</option>`
+      ).join('') +
+      `</optgroup>`
+    ).join('');
+
+  // Payments dropdown
+  const paySel = $('payStudent');
+  if (paySel) {
+    const curPay = paySel.value;
+    paySel.innerHTML = opts;
+    if (curPay) paySel.value = curPay;
+  }
+
+  // Results dropdown
+  const resSel = $('resStudent');
+  if (resSel) {
+    const curRes = resSel.value;
+    resSel.innerHTML = opts;
+    if (curRes) resSel.value = curRes;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 16 — PAYMENTS
+// ═══════════════════════════════════════════════════════
+function renderPayments() {
+  if (!$('paymentList')) return;
+  if (!payments.length) {
+    $('paymentList').innerHTML = '<div class="empty"><div class="empty-icon">💳</div><div class="empty-text">No payments recorded yet.</div></div>';
+    return;
+  }
+  const sorted = [...payments].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  $('paymentList').innerHTML = sorted.map(p => {
+    const s = students.find(x => x.id === p.student_id);
+    return `<div style="background:white;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--navy)">${s ? s.name : 'Unknown'}</div>
+          <div style="font-size:11px;color:var(--grey)">${s ? (s.student_class || '—') : '—'} · ${p.payment_date || td()} · ${p.payment_method || 'Cash'}</div>
+        </div>
+        <div style="font-size:18px;font-weight:800;color:var(--green)">${fmt(p.amount)}</div>
+      </div>
+      ${userRole==='admin' ? `<button onclick="generateReceipt('${p.id}')" style="padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;width:100%">🧾 Generate Receipt</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function recordPayment() {
+  if (userRole === 'teacher') { toast('Teachers cannot record payments.', 'error'); return; }
+  const sid    = sanitize($('payStudent').value);
+  const amount = Number($('payAmount').value);
+  const method = $('payMethod').value;
+  const date   = $('payDate').value || td();
+  const notes  = sanitize($('payNotes')?.value || '');
+
+  if (!sid)    { toast('Select a student',  'error'); return; }
+  if (!amount) { toast('Enter an amount',   'error'); return; }
+
+  const s = students.find(x => x.id === sid);
+  if (!s) { toast('Student not found', 'error'); return; }
+  const { balance } = getBalance(s);
+  if (amount > balance + 1) { toast('⚠️ Exceeds balance ' + fmt(balance), 'error'); return; }
+
+  showLoader();
+  try {
+    const payment = {
+      id:             generateId(),
+      school_id:      currentSchool.id,
+      student_id:     sid,
+      amount,
+      payment_method: method,
+      payment_date:   date,
+      notes,
+      recorded_by:    userRole === 'teacher' ? (currentTeacher?.name || 'Teacher') : 'Admin',
+      created_at:     new Date().toISOString()
+    };
+    DB.add('cx_payments', payment);
+    payments.unshift(payment);
+
+    $('payStudent').value      = '';
+    if ($('payAmount'))  $('payAmount').value  = '';
+    if ($('payNotes'))   $('payNotes').value   = '';
+    $('payDate').value = td();
+
+    renderPayments();
+    renderStudents();
+    renderDashboard();
+    toast('✅ ' + fmt(amount) + ' recorded for ' + s.name, 'success');
+    generateReceipt(payment.id);
+  } finally { hideLoader(); }
+}
+
+function openQuickPay(id) {
+  quickPayId = id;
+  const s = students.find(x => x.id === id);
+  const { balance } = getBalance(s);
+  $('modalStudentInfo').innerHTML = '<strong>' + s.name + '</strong> — Balance: <strong style="color:var(--red)">' + fmt(balance) + '</strong>';
+  $('modalAmt').value = '';
+  $('quickPayModal').classList.add('open');
+}
+function closeModal() { $('quickPayModal').classList.remove('open'); quickPayId = null; }
+
+function saveQuickPay() {
+  const amount = Number($('modalAmt').value);
+  const method = $('modalMethod').value;
+  if (!amount) { toast('Enter amount', 'error'); return; }
+  const s = students.find(x => x.id === quickPayId);
+  const { balance } = getBalance(s);
+  if (amount > balance + 1) { toast('⚠️ Exceeds balance ' + fmt(balance), 'error'); return; }
+
+  showLoader();
+  try {
+    const payment = {
+      id:             generateId(),
+      school_id:      currentSchool.id,
+      student_id:     quickPayId,
+      amount,
+      payment_method: method,
+      payment_date:   td(),
+      recorded_by:    userRole === 'teacher' ? (currentTeacher?.name || 'Teacher') : 'Admin',
+      created_at:     new Date().toISOString()
+    };
+    DB.add('cx_payments', payment);
+    payments.unshift(payment);
+    closeModal();
+    renderStudents();
+    renderDashboard();
+    toast('✅ ' + fmt(amount) + ' recorded for ' + s.name, 'success');
+    generateReceipt(payment.id);
+  } finally { hideLoader(); }
+}
+
+function viewPayHistory(studentId) {
+  const s = students.find(x => x.id === studentId); if (!s) return;
+  const { owed, paid, balance } = getBalance(s);
+  const sPayments = payments.filter(p => p.student_id === studentId)
+    .sort((a, b) => new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at));
+
+  $('phStudentName').textContent = s.name;
+  $('phStudentMeta').innerHTML   = `<span class="info-chip">Class: ${s.student_class||'—'}</span><span class="info-chip" style="color:var(--green)">Paid: ${fmt(paid)}</span><span class="info-chip" style="color:var(--red)">Balance: ${fmt(balance)}</span>`;
+  $('phList').innerHTML = sPayments.length
+    ? sPayments.map(p => `
+        <div class="ph-item">
+          <div class="ph-left">
+            <div class="ph-date">${p.payment_date || p.created_at?.split('T')[0] || '—'}</div>
+            <div class="ph-method">${p.payment_method || 'Cash'}</div>
+            <div class="ph-by">Recorded by: ${p.recorded_by || 'Admin'}</div>
+          </div>
+          <div class="ph-amount">${fmt(p.amount)}</div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:24px 0"><div class="empty-icon" style="font-size:32px">💳</div><div class="empty-text">No payments yet.</div></div>';
+  $('payHistoryModal').classList.add('open');
+}
+
+function exportPaymentsCSV() {
+  if (!payments.length) { toast('No payments to export', 'error'); return; }
+  const rows = [['Student Name','Class','Amount (N)','Date','Method','Recorded By']];
+  payments.forEach(p => {
+    const s = students.find(x => x.id === p.student_id);
+    rows.push([s?.name||'Unknown', s?.student_class||'', p.amount, p.payment_date||'', p.payment_method||'Cash', p.recorded_by||'Admin']);
+  });
+  const csv  = rows.map(r => r.map(c => '"' + c + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = (currentSchool.name + '_payments_' + td() + '.csv').replace(/\s+/g, '_');
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Export ready!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 17 — RESULTS
+// ═══════════════════════════════════════════════════════
+const AFF_F = ['respect','leadership','perseverance','punctuality','neatness','obedience','diligence','self_control','patience','fluency'];
+const AFF_L = ['Respect','Leadership','Perseverance','Punctuality','Neatness','Obedience','Diligence','Self-Control','Patience','Fluency'];
+const PSY_F = ['drawing','painting','sport_games','handwriting','handling_tools','innovative','swimming','cycling','balance','skills'];
+const PSY_L = ['Drawing','Painting','Sport & Games','Handwriting','Handling of Tools','Innovative Ability','Swimming','Cycling','Balance','Skills'];
+
+function calcTotal() {
+  const ca  = Number($('resCA').value)   || 0;
+  const ex  = Number($('resExam').value) || 0;
+  const tot = ca + ex;
+  if (ca > 0 || ex > 0) {
+    $('totalPreview').style.display = 'block';
+    $('totalVal').textContent = tot;
+    const { g, r, c } = getGrade(tot);
+    $('gradeVal').textContent  = g + ' — ' + r;
+    $('gradeVal').style.color  = c;
+  }
+}
+
+function loadStudentResults() {
+  const id = $('resStudent').value; if (!id) return;
+  ['subjectSection','resultsSection','affectiveSection','psychomotorSection','commentsSection','reportCardBtn']
+    .forEach(s => { const el = $(s); if (el) el.style.display = 'block'; });
+  renderResults(id);
+  buildRatings('affectiveRatings',   AFF_L, AFF_F, 'af');
+  buildRatings('psychomotorRatings', PSY_L, PSY_F, 'ps');
+  affData = {}; psyData = {}; comData = {};
+
+  const af = DB.find('cx_affective',   a => a.student_id === id && a.term === currentSchool.term && a.session === currentSchool.session);
+  if (af)  { affData = af; loadRating('af', AFF_F, af); }
+  const ps = DB.find('cx_psychomotor', p => p.student_id === id && p.term === currentSchool.term && p.session === currentSchool.session);
+  if (ps)  { psyData = ps; loadRating('ps', PSY_F, ps); }
+  const co = DB.find('cx_comments',    c => c.student_id === id && c.term === currentSchool.term && c.session === currentSchool.session);
+  if (co)  {
+    comData = co;
+    $('timesOpened').value    = co.times_school_opened || '';
+    $('timesPresent').value   = co.times_present       || '';
+    $('teacherComment').value = co.teacher_comment     || '';
+    $('headComment').value    = co.head_comment        || '';
+    $('resumptionDate').value = co.next_resumption     || '';
+  }
+}
+
+function buildRatings(cid, labels, fields, pfx) {
+  const c = $(cid); if (!c) return;
+  c.innerHTML = labels.map((lbl, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;font-weight:500">${lbl}</span>
+      <div style="display:flex;gap:4px">${[1,2,3,4,5].map(n =>
+        `<div id="${pfx}-${fields[i]}-${n}" onclick="pickRating('${pfx}','${fields[i]}',${n})"
+          style="width:28px;height:28px;border-radius:6px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--grey);background:white">${n}</div>`
+      ).join('')}</div>
+    </div>`).join('');
+}
+
+function pickRating(pfx, field, val) {
+  [1,2,3,4,5].forEach(n => {
+    const el = $(pfx + '-' + field + '-' + n); if (!el) return;
+    el.style.background   = n === val ? 'var(--navy)' : 'white';
+    el.style.color        = n === val ? 'white' : 'var(--grey)';
+    el.style.borderColor  = n === val ? 'var(--navy)' : 'var(--border)';
+  });
+  if (pfx === 'af') affData[field] = val;
+  else              psyData[field] = val;
+}
+function loadRating(pfx, fields, data) {
+  fields.forEach(f => { if (data[f]) pickRating(pfx, f, data[f]); });
+}
+
+function saveResult() {
+  const sid     = $('resStudent').value;
+  const subject = sanitize($('resSubject').value);
+  const ca      = Number($('resCA').value)   || 0;
+  const exam    = Number($('resExam').value) || 0;
+  if (!sid || !subject) { toast('Select student and enter subject', 'error'); return; }
+  if (ca   > 40) { toast('CA max is 40',   'error'); return; }
+  if (exam > 60) { toast('Exam max is 60', 'error'); return; }
+
+  showLoader();
+  try {
+    // Check if subject exists for this student this term — update if so
+    const all     = DB.get('cx_results');
+    const existing = all.findIndex(r => r.student_id === sid && r.subject.toLowerCase() === subject.toLowerCase() && r.term === currentSchool.term && r.session === currentSchool.session);
+    const record  = {
+      id:          existing > -1 ? all[existing].id : generateId(),
+      school_id:   currentSchool.id,
+      student_id:  sid,
+      subject,
+      ca_score:    ca,
+      exam_score:  exam,
+      term:        currentSchool.term,
+      session:     currentSchool.session,
+      created_at:  new Date().toISOString()
+    };
+    if (existing > -1) { all[existing] = record; DB.set('cx_results', all); }
+    else               { DB.add('cx_results', record); }
+    // Sync in-memory
+    results = DB.where('cx_results', r => r.school_id === currentSchool.id);
+    $('resSubject').value = ''; $('resCA').value = ''; $('resExam').value = '';
+    $('totalPreview').style.display = 'none';
+    renderResults(sid);
+    toast('✅ ' + subject + ' saved!', 'success');
+  } finally { hideLoader(); }
+}
+
+function renderResults(filterId) {
+  const id   = filterId || $('resStudent')?.value;
+  const sec  = $('resultsSection'); if (sec) sec.style.display = id ? 'block' : 'none';
+  const lst  = id ? results.filter(r => r.student_id === id) : [];
+  if (!lst.length) {
+    $('resultsList').innerHTML = `<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">${id ? 'No subjects yet.' : 'Select a student.'}</div></div>`;
+    return;
+  }
+  $('resultsList').innerHTML = lst.map(r => {
+    const tot   = Number(r.ca_score) + Number(r.exam_score);
+    const { g, r: rk, c } = getGrade(tot);
+    return `<div class="result-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="result-subject">${r.subject}</div>
+        <span class="grade-badge" style="background:${c}20;color:${c}">${g} — ${rk}</span>
+      </div>
+      <div class="result-scores">
+        <div class="score-box"><div class="score-val">${r.ca_score}</div><div class="score-lbl">CA (40)</div></div>
+        <div class="score-box"><div class="score-val">${r.exam_score}</div><div class="score-lbl">Exam (60)</div></div>
+        <div class="score-box score-total"><div class="score-val">${tot}</div><div class="score-lbl">Total</div></div>
+      </div>
+      <button onclick="deleteResult('${r.id}')" style="margin-top:8px;padding:5px 12px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🗑️ Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteResult(id) {
+  confirmAction('Remove Result', 'Remove this subject result?', () => {
+    DB.delete('cx_results', id);
+    results = results.filter(r => r.id !== id);
+    renderResults($('resStudent')?.value);
+    toast('Result removed.', 'success');
+  });
+}
+
+function saveAffective() {
+  const sid = $('resStudent').value; if (!sid) { toast('Select a student first', 'error'); return; }
+  const payload = { student_id: sid, school_id: currentSchool.id, term: currentSchool.term, session: currentSchool.session, ...affData };
+  const all  = DB.get('cx_affective');
+  const idx  = all.findIndex(a => a.student_id === sid && a.term === currentSchool.term && a.session === currentSchool.session);
+  if (idx > -1) all[idx] = { ...all[idx], ...payload }; else all.push({ id: generateId(), ...payload });
+  DB.set('cx_affective', all);
+  toast('✅ Affective saved!', 'success');
+}
+
+function savePsychomotor() {
+  const sid = $('resStudent').value; if (!sid) { toast('Select a student first', 'error'); return; }
+  const payload = { student_id: sid, school_id: currentSchool.id, term: currentSchool.term, session: currentSchool.session, ...psyData };
+  const all  = DB.get('cx_psychomotor');
+  const idx  = all.findIndex(p => p.student_id === sid && p.term === currentSchool.term && p.session === currentSchool.session);
+  if (idx > -1) all[idx] = { ...all[idx], ...payload }; else all.push({ id: generateId(), ...payload });
+  DB.set('cx_psychomotor', all);
+  toast('✅ Psychomotor saved!', 'success');
+}
+
+function saveComments() {
+  const sid = $('resStudent').value; if (!sid) { toast('Select a student first', 'error'); return; }
+  const payload = {
+    student_id:          sid,
+    school_id:           currentSchool.id,
+    term:                currentSchool.term,
+    session:             currentSchool.session,
+    teacher_comment:     sanitize($('teacherComment').value),
+    head_comment:        sanitize($('headComment').value),
+    times_school_opened: Number($('timesOpened').value) || 0,
+    times_present:       Number($('timesPresent').value) || 0,
+    next_resumption:     sanitize($('resumptionDate').value)
+  };
+  const all = DB.get('cx_comments');
+  const idx = all.findIndex(c => c.student_id === sid && c.term === currentSchool.term && c.session === currentSchool.session);
+  if (idx > -1) all[idx] = { ...all[idx], ...payload }; else all.push({ id: generateId(), ...payload });
+  DB.set('cx_comments', all);
+  comData = payload;
+  toast('✅ Comments saved!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 18 — REPORT CARD
+// ═══════════════════════════════════════════════════════
+function generateReportCard() {
+  const sid = $('resStudent').value; if (!sid) { toast('Select a student', 'error'); return; }
+  const student = students.find(s => s.id === sid); if (!student) return;
+  const sRes = results.filter(r => r.student_id === sid);
+  if (!sRes.length) { toast('No results entered yet', 'error'); return; }
+
+  const classStuds = students.filter(s => s.student_class === student.student_class);
+  const avgs = classStuds.map(s => {
+    const rs = results.filter(r => r.student_id === s.id);
+    return { id: s.id, avg: rs.length ? Math.round(rs.reduce((a, r) => a + Number(r.ca_score) + Number(r.exam_score), 0) / rs.length) : 0 };
+  }).sort((a, b) => b.avg - a.avg);
+  const myAvg = avgs.find(x => x.id === sid);
+  const pos   = myAvg ? avgs.indexOf(myAvg) + 1 : null;
+  const avg   = myAvg ? myAvg.avg : 0;
+  const cAvg  = avgs.length ? Math.round(avgs.reduce((a, x) => a + x.avg, 0) / avgs.length) : 0;
+  const dAbs  = (comData.times_school_opened || 0) - (comData.times_present || 0);
+
+  const subRows = sRes.map((r, i) => {
+    const tot = Number(r.ca_score) + Number(r.exam_score);
+    const { g, r: rk } = getGrade(tot);
+    return `<tr><td style="padding:4px;border:1px solid #ccc;text-align:center">${i+1}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc">${r.subject}</td>
+      <td style="padding:4px;border:1px solid #ccc;text-align:center">100</td>
+      <td style="padding:4px;border:1px solid #ccc;text-align:center">${r.ca_score}</td>
+      <td style="padding:4px;border:1px solid #ccc;text-align:center">${r.exam_score}</td>
+      <td style="padding:4px;border:1px solid #ccc;text-align:center;font-weight:700">${tot}</td>
+      <td style="padding:4px;border:1px solid #ccc;text-align:center">${g}</td>
+      <td style="padding:4px;border:1px solid #ccc;text-align:center">${rk}</td></tr>`;
+  }).join('');
+
+  const affH = AFF_F.map((f, i) => `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #eee;font-size:9px"><span>${AFF_L[i]}</span><strong>${affData[f]||'—'}</strong></div>`).join('');
+  const psyH = PSY_F.map((f, i) => `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #eee;font-size:9px"><span>${PSY_L[i]}</span><strong>${psyData[f]||'—'}</strong></div>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report Card — ${student.name}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:12px;max-width:700px;margin:0 auto}
+.pb{display:block;margin:0 auto 16px;padding:10px 24px;background:#2368FE;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.card{border:2px solid #0F1B3D;border-radius:8px;padding:16px}
+.hdr{display:flex;gap:16px;align-items:center;padding-bottom:10px;border-bottom:2px solid #0F1B3D;margin-bottom:10px}
+.sn{font-size:18px;font-weight:900;color:#0F1B3D;line-height:1.2}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+th{background:#0F1B3D;color:white;padding:5px 4px;text-align:center;font-size:10px}
+.ig{display:grid;grid-template-columns:1fr 1fr;border:1px solid #ccc;margin-bottom:8px}
+.ir{display:flex;padding:4px 8px;border-bottom:1px solid #eee;border-right:1px solid #eee;font-size:11px}
+.ir:nth-child(even){border-right:none}.il{color:#555;min-width:120px;font-size:10px}.iv{font-weight:700;color:#0F1B3D}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.sec{border:1px solid #ccc;border-radius:6px;overflow:hidden}
+.st{background:#0F1B3D;color:white;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
+.sb{padding:6px 8px}
+.ag{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px;text-align:center}
+.av{font-size:22px;font-weight:800;color:#0F1B3D}.al{font-size:10px;color:#666}
+.fa{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:2px dashed #ccc}
+.st2{width:80px;height:60px;border:2px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#999;text-align:center;line-height:1.3}
+@media print{body{padding:0}.pb{display:none}@page{margin:8mm;size:A4}.card{border:2px solid black}th,.st{background:black!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+</head><body>
+<button class="pb" onclick="window.print()">🖨️ Print Report Card</button>
+<div class="card">
+  <div class="hdr">
+    <div style="min-width:80px"><div style="font-size:52px;text-align:center">🏫</div></div>
+    <div>
+      <div class="sn">${currentSchool.name}</div>
+      <div style="font-size:10px;color:#555;margin-top:2px">${currentSchool.address||''}</div>
+      <div style="font-size:10px;color:#555">${currentSchool.phone||''}</div>
+      <div style="margin-top:4px"><span style="border:2px solid #0F1B3D;padding:2px 8px;font-size:10px;font-weight:800;color:#0F1B3D;text-transform:uppercase;letter-spacing:.5px">Academic Progress Report Card</span></div>
+    </div>
+  </div>
+  <div class="ig">
+    <div class="ir"><span class="il">STUDENT'S NAME:</span><span class="iv">${student.name}</span></div>
+    <div class="ir"><span class="il">CLASS:</span><span class="iv">${student.student_class||''}</span></div>
+    <div class="ir"><span class="il">TERM:</span><span class="iv">${currentSchool.term}</span></div>
+    <div class="ir"><span class="il">SESSION:</span><span class="iv">${currentSchool.session}</span></div>
+    <div class="ir"><span class="il">POSITION IN CLASS:</span><span class="iv">${pos ? ordinal(pos) : '—'}</span></div>
+    <div class="ir"><span class="il">SUBJECTS:</span><span class="iv">${sRes.length}</span></div>
+    <div class="ir"><span class="il">STUDENT AVERAGE:</span><span class="iv">${avg}%</span></div>
+    <div class="ir"><span class="il">CLASS AVERAGE:</span><span class="iv">${cAvg}%</span></div>
+  </div>
+  <table><thead><tr>
+    <th>#</th><th>SUBJECT</th><th>MAX</th><th>CA</th><th>EXAM</th><th>TOTAL</th><th>GRADE</th><th>REMARK</th>
+  </tr></thead><tbody>${subRows}</tbody></table>
+  <div class="ag">
+    <div><div class="av">${avg}%</div><div class="al">Student Avg</div></div>
+    <div><div class="av">${cAvg}%</div><div class="al">Class Avg</div></div>
+    <div><div class="av">${pos ? ordinal(pos) : '—'}</div><div class="al">Position</div></div>
+  </div>
+  <div class="tc">
+    <div class="sec"><div class="st">Affective Domain</div><div class="sb">${affH}</div></div>
+    <div class="sec"><div class="st">Psychomotor Domain</div><div class="sb">${psyH}</div></div>
+  </div>
+  <div class="sec" style="margin-bottom:8px">
+    <div class="st">Attendance & Comments</div>
+    <div class="sb">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;text-align:center">
+        <div><div style="font-size:16px;font-weight:800">${comData.times_school_opened||0}</div><div style="font-size:9px;color:#666">Days School Opened</div></div>
+        <div><div style="font-size:16px;font-weight:800">${comData.times_present||0}</div><div style="font-size:9px;color:#666">Days Present</div></div>
+        <div><div style="font-size:16px;font-weight:800">${dAbs}</div><div style="font-size:9px;color:#666">Absences</div></div>
+      </div>
+      <div style="margin-bottom:6px"><div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Class Teacher's Comment</div><div style="font-size:11px;min-height:20px">${comData.teacher_comment||'—'}</div></div>
+      <div><div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Head Teacher's Comment</div><div style="font-size:11px;min-height:20px">${comData.head_comment||'—'}</div></div>
+    </div>
+  </div>
+  <div class="fa">
+    <div>
+      <div style="font-size:10px;color:#555;margin-bottom:4px">Next Term Begins:</div>
+      <div style="font-size:12px;font-weight:700">${comData.next_resumption||'—'}</div>
+    </div>
+    <div class="st2">Class Teacher<br>Signature</div>
+    <div class="st2">Head Teacher<br>Signature</div>
+    <div class="st2">School<br>Stamp</div>
+  </div>
+  <div style="text-align:center;font-size:9px;color:#999;margin-top:8px;padding-top:8px;border-top:1px dashed #ccc">Powered by Chinexo School Management System · v${APP_VERSION}</div>
+</div></body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { toast('Allow pop-ups to open report card.', 'error'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 19 — TERM REPORT & DEFAULTERS PAGE
+// ═══════════════════════════════════════════════════════
+function renderReport() {
+  if (!currentSchool) return;
+
+  const total      = students.length;
+  const paidList   = students.filter(s => getStatus(s) === 'paid');
+  const partialList = students.filter(s => getStatus(s) === 'partial');
+  const unpaidList  = students.filter(s => getStatus(s) === 'unpaid');
+  const expected   = students.reduce((a, s) => a + s.fee * (s.terms_owed || 1), 0);
+  const collected  = payments.reduce((a, p) => a + Number(p.amount), 0);
+  const outstanding = Math.max(0, expected - collected);
+  const pct        = expected > 0 ? Math.round(collected / expected * 100) : 0;
+
+  const sumEl = $('reportSummary');
+  if (sumEl) {
+    sumEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--green)">${paidList.length}</div>
+          <div style="font-size:11px;color:var(--grey)">Fully Paid</div>
+        </div>
+        <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--amber)">${partialList.length}</div>
+          <div style="font-size:11px;color:var(--grey)">Part Payment</div>
+        </div>
+        <div style="background:#fee2e2;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--red)">${unpaidList.length}</div>
+          <div style="font-size:11px;color:var(--grey)">Not Paid</div>
+        </div>
+        <div style="background:var(--light);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--navy)">${total}</div>
+          <div style="font-size:11px;color:var(--grey)">Total Students</div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:10px;padding:12px;border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600;color:var(--navy)">Collection Progress</span>
+          <span style="font-size:12px;font-weight:700;color:var(--blue)">${pct}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--grey);margin-top:4px">
+          <span>Collected: <strong style="color:var(--green)">${fmt(collected)}</strong></span>
+          <span>Outstanding: <strong style="color:var(--red)">${fmt(outstanding)}</strong></span>
+        </div>
+      </div>`;
+  }
+
+  // Defaulters (unpaid + partial)
+  const defaulters = [...partialList, ...unpaidList].sort((a, b) => {
+    const ba = getBalance(a).balance, bb = getBalance(b).balance;
+    return bb - ba;
+  });
+  const defEl = $('reportDefaulters');
+  if (!defEl) return;
+  if (!defaulters.length) {
+    defEl.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">All students have paid!</div></div>';
+    return;
+  }
+  defEl.innerHTML = defaulters.map(s => {
+    const { owed, paid, balance } = getBalance(s);
+    const status = getStatus(s);
+    return `<div class="student-card ${status}" style="margin-bottom:10px">
+      <div class="student-top">
+        <div>
+          <div class="student-name">${s.name}</div>
+          <div class="student-class">${s.student_class || '—'}</div>
+        </div>
+        <span class="badge ${status}">${status==='partial'?'⏳ Partial':'❌ Unpaid'}</span>
+      </div>
+      <div class="fee-row"><span>Balance</span><strong style="color:var(--red)">${fmt(balance)}</strong></div>
+      <div class="student-actions">
+        ${userRole !== 'teacher' ? `<button class="btn small primary" onclick="openQuickPay('${s.id}')">💳 Pay Now</button>` : ''}
+        ${s.parent_phone
+          ? `<a class="wa-btn" href="https://wa.me/234${s.parent_phone.replace(/^0/,'')}?text=${encodeURIComponent(waMsg(s))}" target="_blank">📱 Remind</a>`
+          : `<span style="font-size:11px;color:var(--grey)">No phone</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function sendAllReminders() {
+  const defaulters = students.filter(s => getStatus(s) !== 'paid' && s.parent_phone);
+  if (!defaulters.length) { toast('No defaulters with phone numbers.', 'error'); return; }
+  confirmAction('Send All Reminders', `Send WhatsApp reminders to ${defaulters.length} parent(s)?`, () => {
+    defaulters.forEach((s, i) => {
+      setTimeout(() => {
+        const url = `https://wa.me/234${s.parent_phone.replace(/^0/,'')}?text=${encodeURIComponent(waMsg(s))}`;
+        window.open(url, '_blank');
+      }, i * 600);
+    });
+    toast(`📱 Opening ${defaulters.length} WhatsApp chat(s)…`, 'success');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 20 — RECEIPT
+// ═══════════════════════════════════════════════════════
+function generateReceipt(payId) {
+  const p  = payments.find(x => x.id === payId); if (!p) return;
+  const s  = students.find(x => x.id === p.student_id);
+  const sc = currentSchool;
+  const { balance } = getBalance(s);
+  const no = 'RCP-' + payId.substring(0, 8).toUpperCase();
+  const dt = new Date(p.payment_date || p.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  receiptText = `OFFICIAL RECEIPT — ${sc.name}\nNo: ${no}\nDate: ${dt}\nStudent: ${s?.name||'Unknown'}\nClass: ${s?.student_class||''}\nAmount: ${fmt(p.amount)}\nBalance: ${fmt(balance)}\nMethod: ${p.payment_method||'Cash'}\nTerm: ${sc.term||''} ${sc.session||''}\nPowered by Chinexo`;
+
+  $('receiptContent').innerHTML = `<div class="receipt-paper">
+    <div class="receipt-header">
+      <div class="receipt-school">${sc.name}</div>
+      <div class="receipt-sub">${sc.address||''}</div>
+      <div class="receipt-title">Official Payment Receipt</div>
+    </div>
+    <div class="receipt-amount">
+      <div class="receipt-amount-val">${fmt(p.amount)}</div>
+      <div class="receipt-amount-lbl">Amount Paid</div>
+    </div>
+    <div class="receipt-row"><span class="receipt-row-label">Receipt No.</span><span class="receipt-row-val">${no}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Student</span><span class="receipt-row-val">${s?.name||'Unknown'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Class</span><span class="receipt-row-val">${s?.student_class||'—'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Method</span><span class="receipt-row-val">${p.payment_method||'Cash'}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Date</span><span class="receipt-row-val">${dt}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Term</span><span class="receipt-row-val">${sc.term||''} ${sc.session||''}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Remaining Balance</span><span class="receipt-row-val" style="color:${balance>0?'var(--red)':'var(--green)'}">${fmt(balance)}</span></div>
+    <div class="receipt-row"><span class="receipt-row-label">Recorded by</span><span class="receipt-row-val">${p.recorded_by||'Admin'}</span></div>
+    <div class="receipt-footer">Official receipt issued by ${sc.name}<br>Powered by Chinexo · ${sc.phone||''}</div>
+  </div>`;
+  $('receiptModal').classList.add('open');
+}
+
+function closeReceipt() { $('receiptModal').classList.remove('open'); }
+function shareReceipt() { window.open('https://wa.me/?text=' + encodeURIComponent(receiptText), '_blank'); }
+function printReceipt() {
+  const html = $('receiptContent').innerHTML;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Allow pop-ups to print.', 'error'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>
+<style>body{font-family:Arial,sans-serif;padding:20px;max-width:400px;margin:0 auto}
+.receipt-paper{border:2px dashed #e5e7eb;border-radius:16px;padding:24px 20px}
+.receipt-header{text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed #e5e7eb}
+.receipt-school{font-size:18px;font-weight:800}.receipt-sub{font-size:11px;color:#6B7280;margin-top:2px}
+.receipt-title{font-size:12px;font-weight:700;color:#2368FE;letter-spacing:1px;text-transform:uppercase;margin-top:8px}
+.receipt-amount{text-align:center;background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0}
+.receipt-amount-val{font-size:28px;font-weight:800;color:#16a34a}.receipt-amount-lbl{font-size:11px;color:#6B7280;margin-top:2px}
+.receipt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+.receipt-row:last-child{border-bottom:none}.receipt-row-label{color:#6B7280}.receipt-row-val{font-weight:700}
+.receipt-footer{text-align:center;margin-top:16px;padding-top:16px;border-top:1px dashed #e5e7eb;font-size:11px;color:#9CA3AF;line-height:1.6}
+@media print{@page{margin:8mm}}</style></head>
+<body>${html}<scr`+`ipt>window.onload=()=>window.print()</`+`script></body></html>`);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 21 — SETTINGS
+// ═══════════════════════════════════════════════════════
+function saveSchoolProfile() {
+  const name    = sanitize($('settingsName').value);
+  const address = sanitize($('settingsAddress').value);
+  const phone   = sanitize($('settingsPhone').value);
+  const email   = sanitize($('settingsEmail').value);
+  if (!name) { toast('School name is required', 'error'); return; }
+  DB.update('cx_schools', currentSchool.id, { name, address, phone, email });
+  currentSchool = { ...currentSchool, name, address, phone, email };
+  persistSession({ type: 'admin', schoolId: currentSchool.id });
+  $('headerSchoolName').textContent = name;
+  $('dashSchoolName').textContent   = name;
+  toast('✅ Profile updated!', 'success');
+}
+
+function saveTermSettings() {
+  const term        = $('settingsTerm').value;
+  const session     = sanitize($('settingsSession').value);
+  const default_fee = Math.max(0, Number($('settingsDefaultFee').value) || 0);
+  if (!session) { toast('Enter academic session', 'error'); return; }
+  DB.update('cx_schools', currentSchool.id, { term, session, default_fee });
+  currentSchool = { ...currentSchool, term, session, default_fee };
+  persistSession({ type: 'admin', schoolId: currentSchool.id });
+  $('dashTerm').textContent = term + ' • ' + session;
+  if (default_fee) $('sFee').value = default_fee;
+  toast('✅ Term settings updated!', 'success');
+}
+
+function changePassword() {
+  const cur  = $('currentPass').value;
+  const newP = $('newPass').value;
+  const conf = $('confirmPass').value;
+  if (!cur || !newP || !conf)     { toast('Fill all password fields',             'error'); return; }
+  if (!validatePassword(newP))    { toast('New password must be at least 8 chars','error'); return; }
+  if (newP !== conf)              { toast('New passwords do not match',            'error'); return; }
+  if (!checkPassword(cur, currentSchool.password)) { toast('Current password is wrong', 'error'); return; }
+  const hashed = hashPassword(newP);
+  DB.update('cx_schools', currentSchool.id, { password: hashed });
+  currentSchool.password = hashed;
+  $('currentPass').value = ''; $('newPass').value = ''; $('confirmPass').value = '';
+  toast('✅ Password changed!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 22 — TEACHERS
+// ═══════════════════════════════════════════════════════
+function loadTeachers() {
+  if (!currentSchool) return;
+  teachers = DB.where('cx_teachers', t => t.school_id === currentSchool.id);
+  renderTeachers();
+}
+
+function renderTeachers() {
+  $('teacherCount').textContent = teachers.length;
+  $('teacherList').innerHTML = teachers.length
+    ? teachers.map(t => `<div class="student-card" style="border-left-color:var(--purple)">
+        <div class="student-top">
+          <div>
+            <div class="student-name">${t.name}</div>
+            <div class="student-class">📚 ${t.class_assigned} · 📱 ${t.phone}</div>
+          </div>
+          <button class="btn small danger" onclick="deleteTeacher('${t.id}')">🗑️</button>
+        </div>
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">👩‍🏫</div><div class="empty-text">No teachers added yet.</div></div>';
+}
+
+function addTeacher() {
+  const name  = sanitize($('teacherName').value);
+  const phone = sanitize($('teacherPhoneAdd').value);
+  const cls   = sanitize($('teacherClass').value);
+  const pass  = $('teacherPassword').value;
+  if (!name || !phone || !cls || !pass) { toast('Fill all teacher fields', 'error'); return; }
+  if (!validatePhone(phone))            { toast('Enter valid 11-digit phone', 'error'); return; }
+  if (!validatePassword(pass))          { toast('Password must be at least 8 characters', 'error'); return; }
+  if (DB.find('cx_teachers', t => t.phone === phone)) { toast('Teacher phone already registered', 'error'); return; }
+
+  const teacher = {
+    id:             generateId(),
+    school_id:      currentSchool.id,
+    name, phone,
+    class_assigned: cls,
+    password:       hashPassword(pass),
+    created_at:     new Date().toISOString()
+  };
+  DB.add('cx_teachers', teacher);
+  teachers.push(teacher);
+  $('teacherName').value = ''; $('teacherPhoneAdd').value = ''; $('teacherClass').value = ''; $('teacherPassword').value = '';
+  renderTeachers();
+  toast('✅ ' + name + ' added!', 'success');
+}
+
+function deleteTeacher(id) {
+  confirmAction('Remove Teacher', 'Remove this teacher account?', () => {
+    DB.delete('cx_teachers', id);
+    teachers = teachers.filter(t => t.id !== id);
+    renderTeachers();
+    toast('Teacher removed.', 'success');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 23 — SYNC / BACKUP / RESTORE
+// ═══════════════════════════════════════════════════════
+function renderSync() {
+  const sid        = currentSchool?.id;
+  const lastExport = localStorage.getItem('cx_last_export_' + sid);
+  const stuCount   = DB.where('cx_students', s => s.school_id === sid).length;
+  const payCount   = DB.where('cx_payments', p => p.school_id === sid).length;
+  const resCount   = DB.where('cx_results',  r => r.school_id === sid).length;
+  const lastStr    = lastExport ? new Date(lastExport).toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Never';
+  const daysSince  = lastExport ? Math.floor((Date.now() - new Date(lastExport)) / 864e5) : null;
+  const warnColor  = daysSince === null || daysSince > 7 ? 'var(--red)' : daysSince > 3 ? 'var(--amber)' : 'var(--green)';
+
+  $('syncStatusContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--light);border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--navy)">${stuCount}</div><div style="font-size:10px;color:var(--grey)">Students</div></div>
+      <div style="background:var(--light);border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--navy)">${payCount}</div><div style="font-size:10px;color:var(--grey)">Payments</div></div>
+      <div style="background:var(--light);border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--navy)">${resCount}</div><div style="font-size:10px;color:var(--grey)">Results</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--grey)">Last Backup</span>
+      <span style="font-size:13px;font-weight:700;color:${warnColor}">${lastStr}</span>
+    </div>
+    ${daysSince === null || daysSince > 7 ? '<div style="background:#fee2e2;border-radius:8px;padding:8px 12px;font-size:12px;color:#dc2626;margin-top:6px">⚠️ No recent backup. Export your data now.</div>' : ''}
+    <div class="version-note">Chinexo v${APP_VERSION} · Data stored on this device</div>`;
+}
+
+function exportSchoolData() {
+  const sid = currentSchool.id;
+  const now = new Date().toISOString();
+  const data = {
+    export_date:  now,
+    app_version:  APP_VERSION,
+    school:       currentSchool,
+    students:     DB.where('cx_students',    s => s.school_id === sid),
+    payments:     DB.where('cx_payments',    p => p.school_id === sid),
+    results:      DB.where('cx_results',     r => r.school_id === sid),
+    teachers:     DB.where('cx_teachers',    t => t.school_id === sid),
+    affective:    DB.where('cx_affective',   a => a.school_id === sid),
+    psychomotor:  DB.where('cx_psychomotor', p => p.school_id === sid),
+    comments:     DB.where('cx_comments',    c => c.school_id === sid)
+  };
+  downloadJSON(data, (currentSchool.name + '_chinexo_backup_' + td() + '.json').replace(/\s+/g, '_'));
+  localStorage.setItem('cx_last_export_' + sid, now);
+  toast('✅ Backup saved! Share via WhatsApp.', 'success');
+}
+
+function restoreSchoolData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.school) { toast('Invalid backup file.', 'error'); return; }
+      confirmAction('⚠️ Restore Data', 'This will replace existing data for this school. Continue?', () => {
+        const sid = data.school.id;
+        ['students','payments','results','teachers','affective','psychomotor','comments'].forEach(k => {
+          if (data[k]) {
+            const existing = DB.get('cx_' + k).filter(x => x.school_id !== sid);
+            DB.set('cx_' + k, existing.concat(data[k]));
+          }
+        });
+        const schools = DB.get('cx_schools');
+        const idx     = schools.findIndex(s => s.id === sid);
+        if (idx > -1) schools[idx] = { ...schools[idx], ...data.school };
+        else          schools.push(data.school);
+        DB.set('cx_schools', schools);
+        toast('✅ Data restored!', 'success');
+        loadAppData(); renderDashboard();
+      });
+    } catch(err) { toast('Error reading backup file.', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 24 — UTILITIES: DOWNLOAD / CONFIRM
+// ═══════════════════════════════════════════════════════
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 25 — INIT
+// ═══════════════════════════════════════════════════════
+// Set today's date on payment date field
+const pdEl = $('payDate');
+if (pdEl) pdEl.value = td();
+
+// Boot
+resumeSession();
+
+// PWA: Register inline service worker
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE='chinexo-v${APP_VERSION}';
+    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(['.']))));
+    self.addEventListener('fetch',   e => e.respondWith(
+      caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('.')))
+    ));
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+}
+
+// PWA install banner
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  const banner = document.createElement('div');
+  banner.id    = 'installBanner';
+  banner.style.cssText = 'position:fixed;bottom:70px;left:12px;right:12px;background:var(--navy);color:white;padding:12px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;z-index:250;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+  banner.innerHTML = '<span style="font-size:13px;font-weight:600">📱 Install Chinexo as an app</span><button onclick="doInstall()" style="background:var(--blue);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Install</button>';
+  document.body.appendChild(banner);
+  setTimeout(() => { const b = $('installBanner'); if (b) b.remove(); }, 14000);
+});
+function doInstall() {
+  if (deferredInstall) { deferredInstall.prompt(); const b = $('installBanner'); if (b) b.remove(); }
+}
+
+</script>
+</body>
+</html>
