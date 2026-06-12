@@ -306,8 +306,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="sa-modal-box">
     <div class="sa-modal-title">Super Admin</div>
     <div class="sa-modal-sub">Chinexo Platform Control</div>
-    <input type="text" id="saUser" placeholder="Username" class="sa-input" onkeydown="if(event.key==='Enter')document.getElementById('saPass2').focus()">
-    <input type="password" id="saPass2" placeholder="Password" class="sa-input" onkeydown="if(event.key==='Enter')loginSA()">
+    <input type="text" id="saUser" placeholder="Username" class="sa-input" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('saPass2').focus()">
+    <div style="position:relative">
+      <input type="password" id="saPass2" placeholder="Password" class="sa-input" autocomplete="off" autocorrect="off" spellcheck="false" style="padding-right:44px" onkeydown="if(event.key==='Enter')loginSA()">
+      <button type="button" onclick="const i=$('saPass2');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-60%);background:none;border:none;font-size:16px;cursor:pointer;padding:4px">👁️</button>
+    </div>
     <div class="sa-error" id="saErr"></div>
     <div class="sa-actions">
       <button class="sa-cancel" onclick="closeSALogin()">Cancel</button>
@@ -737,7 +740,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 // SECTION 1 — CONSTANTS & CONFIG
 // ═══════════════════════════════════════════════════════
 const SA_USER     = 'saltadmin';
-const SA_PASS     = 'saltpass99';
+const SA_PASS     = 'saltadmin';
 const APP_VERSION = '3.0.0';
 const SUPPORT_WA  = '2349138077497';
 
