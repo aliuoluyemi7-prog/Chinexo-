@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chinexo-v3';
+const CACHE_NAME = 'chinexo-v4';
 const ASSETS = [
   './',
   './index.html',
