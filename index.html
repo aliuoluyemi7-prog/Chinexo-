@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Chinexo">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--navy:#0F1B3D;--blue:#2368FE;--green:#22C55E;--purple:#7C3AED;--light:#F3F5F9;--white:#fff;--grey:#6B7280;--border:#E5E7EB;--red:#EF4444;--amber:#F59E0B}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -2498,17 +2500,9 @@ if (pdEl) pdEl.value = td();
 // Boot
 resumeSession();
 
-// PWA: Register inline service worker
+// PWA: Register external service worker
 if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE='chinexo-v${APP_VERSION}';
-    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(['.']))));
-    self.addEventListener('fetch',   e => e.respondWith(
-      caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('.')))
-    ));
-  `;
-  const swBlob = new Blob([swCode], { type: 'application/javascript' });
-  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
 // PWA install banner
