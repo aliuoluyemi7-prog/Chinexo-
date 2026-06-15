@@ -2328,7 +2328,7 @@ function printReceipt() {
 function handleLogoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (file.size > 600000) { toast('Image too large. Use under 600KB', 'error'); return; }
+  if (file.size > 2000000) { toast('Image too large. Use under 2MB', 'error'); return; }
   const reader = new FileReader();
   reader.onload = function(e) {
     const base64 = e.target.result;
