@@ -2279,6 +2279,7 @@ function generateReceipt(payId) {
 
   $('receiptContent').innerHTML = `<div class="receipt-paper">
     <div class="receipt-header">
+      ${sc.logo ? `<img src="${sc.logo}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin-bottom:8px">` : ''}
       <div class="receipt-school">${sc.name}</div>
       <div class="receipt-sub">${sc.address||''}</div>
       <div class="receipt-title">Official Payment Receipt</div>
