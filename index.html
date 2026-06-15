@@ -1496,6 +1496,13 @@ function renderDashboard() {
   }
 
   // Settings prefill
+  // Show existing logo
+  if (currentSchool.logo) {
+    const preview = document.getElementById('logoPreview');
+    const placeholder = document.getElementById('logoPlaceholder');
+    if (preview) { preview.src = currentSchool.logo; preview.style.display = 'block'; }
+    if (placeholder) placeholder.style.display = 'none';
+  }
   if ($('settingsName'))       $('settingsName').value       = currentSchool.name    || '';
   if ($('settingsAddress'))    $('settingsAddress').value    = currentSchool.address || '';
   if ($('settingsPhone'))      $('settingsPhone').value      = currentSchool.phone   || '';
@@ -2085,7 +2092,7 @@ th{background:#0F1B3D;color:white;padding:5px 4px;text-align:center;font-size:10
 <button class="pb" onclick="window.print()">🖨️ Print Report Card</button>
 <div class="card">
   <div class="hdr">
-    <div style="min-width:80px"><div style="font-size:52px;text-align:center">🏫</div></div>
+    <div style="min-width:80px;text-align:center">${currentSchool.logo ? `<img src="${currentSchool.logo}" style="width:72px;height:72px;object-fit:contain;border-radius:8px">` : `<div style="font-size:52px">🏫</div>`}</div>
     <div>
       <div class="sn">${currentSchool.name}</div>
       <div style="font-size:10px;color:#555;margin-top:2px">${currentSchool.address||''}</div>
