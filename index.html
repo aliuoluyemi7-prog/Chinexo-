@@ -683,12 +683,92 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
+  <!-- ANALYTICS PAGE -->
+  <div class="page" id="page-analytics">
+    <!-- Class selector -->
+    <div class="form-card" style="padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap">📐 Class</span>
+        <select class="form-select" id="analyticsClassPicker" onchange="renderAnalytics()" style="flex:1;padding:9px 12px">
+          <option value="">— Select a class —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Empty / no-class state -->
+    <div id="analyticsEmpty" style="text-align:center;padding:48px 20px;color:var(--grey)">
+      <div style="font-size:48px;margin-bottom:12px">📐</div>
+      <div style="font-size:14px;font-weight:600">Select a class above</div>
+      <div style="font-size:12px;margin-top:6px">Analytics will appear here</div>
+    </div>
+
+    <!-- Analytics content (hidden until class selected) -->
+    <div id="analyticsContent" style="display:none">
+
+      <!-- Class headline card -->
+      <div class="dash-hero" style="margin-bottom:14px">
+        <div class="dash-hero-label">CLASS PERFORMANCE</div>
+        <div class="dash-hero-school" id="aClassName"></div>
+        <div class="dash-hero-term" id="aTermLabel"></div>
+        <div class="dash-hero-stats" style="grid-template-columns:1fr 1fr 1fr 1fr">
+          <div class="dash-stat"><div class="dash-stat-val" id="aStudentCount">0</div><div class="dash-stat-label">Students</div></div>
+          <div class="dash-stat"><div class="dash-stat-val green" id="aClassAvg">0%</div><div class="dash-stat-label">Class Avg</div></div>
+          <div class="dash-stat"><div class="dash-stat-val green" id="aPassRate">0%</div><div class="dash-stat-label">Pass Rate</div></div>
+          <div class="dash-stat"><div class="dash-stat-val red" id="aFailCount">0</div><div class="dash-stat-label">At Risk</div></div>
+        </div>
+      </div>
+
+      <!-- Subject performance bar chart -->
+      <div class="collection-card" style="margin-bottom:14px">
+        <div class="section-header" style="margin-bottom:14px">
+          <div class="section-title">📚 Subject Averages</div>
+          <div style="font-size:11px;color:var(--grey)">out of 100</div>
+        </div>
+        <div id="aSubjectBars"></div>
+      </div>
+
+      <!-- Top performers -->
+      <div class="collection-card" style="margin-bottom:14px">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="section-title">🏆 Top Performers</div>
+          <div style="font-size:11px;color:var(--grey)">Highest avg</div>
+        </div>
+        <div id="aTopStudents"></div>
+      </div>
+
+      <!-- Students at risk -->
+      <div class="collection-card" style="margin-bottom:14px">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="section-title">⚠️ At Risk</div>
+          <div style="font-size:11px;color:var(--grey)">Avg below 40</div>
+        </div>
+        <div id="aAtRisk"></div>
+      </div>
+
+      <!-- Grade distribution -->
+      <div class="collection-card" style="margin-bottom:14px">
+        <div class="section-title" style="margin-bottom:14px">📊 Grade Distribution</div>
+        <div id="aGradeDist"></div>
+      </div>
+
+      <!-- Full student ranking -->
+      <div class="collection-card" style="margin-bottom:80px">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="section-title">🎖️ Full Class Ranking</div>
+        </div>
+        <div id="aRanking"></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
     <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><div class="nav-label">Dashboard</div></div>
     <div class="nav-item" onclick="showPage('students')"><span class="nav-icon">👨‍🎓</span><div class="nav-label">Students</div></div>
     <div class="nav-item" id="navPayments" onclick="showPage('payments')"><span class="nav-icon">💳</span><div class="nav-label">Payments</div></div>
     <div class="nav-item" onclick="showPage('results')"><span class="nav-icon">📝</span><div class="nav-label">Results</div></div>
+    <div class="nav-item" onclick="showPage('analytics')"><span class="nav-icon">📐</span><div class="nav-label">Analytics</div></div>
     <div class="nav-item" onclick="showPage('sync')"><span class="nav-icon">🔄</span><div class="nav-label">Sync</div></div>
     <div class="nav-item" onclick="showPage('settings')"><span class="nav-icon">⚙️</span><div class="nav-label">Settings</div></div>
   </div>
@@ -713,6 +793,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="confirm-actions">
       <button class="confirm-cancel" onclick="$('confirmOverlay').classList.remove('open')">Cancel</button>
       <button class="confirm-ok" id="confirmOkBtn">Yes, proceed</button>
+    </div>
+  </div>
+</div>
+
+<!-- INPUT PROMPT DIALOG -->
+<div class="confirm-overlay" id="inputPromptOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="inputPromptTitle">Enter value</div>
+    <div class="confirm-msg" id="inputPromptMsg" style="margin-bottom:10px"></div>
+    <input class="form-input" type="number" id="inputPromptField" placeholder="e.g. 30" min="1" style="margin-bottom:16px">
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="$('inputPromptOverlay').classList.remove('open')">Cancel</button>
+      <button class="confirm-ok" id="inputPromptOkBtn">Confirm</button>
     </div>
   </div>
 </div>
@@ -751,9 +844,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 // ═══════════════════════════════════════════════════════
 // SECTION 1 — CONSTANTS & CONFIG
 // ═══════════════════════════════════════════════════════
-const SA_USER     = 'saltadmin';
-const SA_PASS     = 'saltadmin';
-const APP_VERSION = '3.0.0';
+const SA_USER      = 'saltadmin';
+const SA_PASS_HASH = '7963629aMzk'; // hashed — real password never stored in code
+const APP_VERSION = '3.0.1';
 const SUPPORT_WA  = '2349138077497';
 
 // ═══════════════════════════════════════════════════════
@@ -793,8 +886,25 @@ function td()                { return new Date().toISOString().split('T')[0]; }
 function generateId()        { return Date.now().toString(36) + Math.random().toString(36).substr(2, 9); }
 
 function ordinal(n) {
-  const s = ['th','st','nd','rd'], v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  if (n >= 11 && n <= 13) return n + 'th';
+  const s = ['th','st','nd','rd'];
+  return n + (s[n % 10] || s[0]);
+}
+
+// Custom input prompt dialog (replaces native prompt())
+function promptInput(title, msg, placeholder, onOk) {
+  $('inputPromptTitle').textContent   = title;
+  $('inputPromptMsg').textContent     = msg;
+  $('inputPromptField').placeholder   = placeholder || '';
+  $('inputPromptField').value         = '';
+  $('inputPromptOverlay').classList.add('open');
+  const btn = $('inputPromptOkBtn');
+  btn.onclick = () => {
+    const val = $('inputPromptField').value;
+    $('inputPromptOverlay').classList.remove('open');
+    onOk(val);
+  };
+  setTimeout(() => $('inputPromptField').focus(), 100);
 }
 
 // Custom confirm dialog (replaces native confirm())
@@ -864,7 +974,7 @@ function hashPassword(password) {
   return hash.toString(16).padStart(8, '0') + btoa(str.length + password.length).replace(/=/g, '');
 }
 function checkPassword(plain, hashed) {
-  return hashPassword(plain) === hashed || plain === hashed; // supports legacy plain-text
+  return hashPassword(plain) === hashed;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -953,6 +1063,7 @@ function showPage(name) {
   if (name === 'results')   populateStudentDropdowns();
   if (name === 'report')    renderReport();
   if (name === 'sync')      renderSync();
+  if (name === 'analytics') initAnalytics();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1165,7 +1276,7 @@ function closeSALogin() { $('saLoginModal').classList.remove('open'); }
 function loginSA() {
   const u = $('saUser').value.trim();
   const p = $('saPass2').value;
-  if (u !== SA_USER || p !== SA_PASS) {
+  if (u !== SA_USER || hashPassword(p) !== SA_PASS_HASH) {
     $('saErr').textContent = 'Invalid credentials.';
     $('saErr').style.display = 'block';
     return;
@@ -1249,19 +1360,22 @@ function saToggleSchool(schoolId, newStatus) {
 function saIssueLicense(schoolId) {
   const school = DB.find('cx_schools', s => s.id === schoolId);
   if (!school) return;
-  // Prompt for days
-  const input = prompt(`Issue license to "${school.name}".\n\nEnter number of days (e.g. 30, 90, 365):`);
-  const days  = parseInt(input);
-  if (!days || days < 1) { toast('Invalid number of days.', 'error'); return; }
-  const lic = issueLicense(schoolId, days);
-  toast(`✅ License issued! Key: ${lic.key}`, 'success');
-  // Show key in a copyable way
-  confirmAction(
-    '🔑 License Key Issued',
-    `School: ${school.name}\nKey: ${lic.key}\nExpiry: ${days} days\n\nShare this key with the school admin.`,
-    () => loadSAData()
+  promptInput(
+    '🔑 Issue License',
+    `School: "${school.name}"\n\nEnter number of days:`,
+    'e.g. 30, 90, 365',
+    (input) => {
+      const days = parseInt(input);
+      if (!days || days < 1) { toast('Invalid number of days.', 'error'); return; }
+      const lic = issueLicense(schoolId, days);
+      confirmAction(
+        '✅ License Issued',
+        `School: ${school.name}\nKey: ${lic.key}\nValid for: ${days} days\n\nShare this key with the school admin.`,
+        () => loadSAData()
+      );
+      loadSAData();
+    }
   );
-  loadSAData();
 }
 
 function saViewLicenses(schoolId) {
@@ -1328,6 +1442,15 @@ function doImport(e) {
 // ═══════════════════════════════════════════════════════
 function startApp(school) {
   currentSchool = school;
+
+  // Guard: re-validate school status from DB (prevents session-tampering bypass)
+  const freshSchool = DB.find('cx_schools', s => s.id === school.id);
+  if (freshSchool && freshSchool.status === 'suspended') {
+    clearSession();
+    showScreen('authScreen');
+    setTimeout(() => showErr('loginError', '⚠️ Account suspended. Contact Chinexo.'), 100);
+    return;
+  }
 
   // Role-based UI restrictions
   const isAdmin   = userRole === 'admin';
@@ -1513,12 +1636,6 @@ function renderDashboard() {
     if (preview) { preview.src = currentSchool.logo; preview.style.display = 'block'; }
     if (placeholder) placeholder.style.display = 'none';
   }
-  if (currentSchool.logo) {
-    const p = document.getElementById('logoPreview');
-    const ph = document.getElementById('logoPlaceholder');
-    if (p) { p.src = currentSchool.logo; p.style.display = 'block'; }
-    if (ph) ph.style.display = 'none';
-  }
   if ($('settingsName'))       $('settingsName').value       = currentSchool.name    || '';
   if ($('settingsAddress'))    $('settingsAddress').value    = currentSchool.address || '';
   if ($('settingsPhone'))      $('settingsPhone').value      = currentSchool.phone   || '';
@@ -1557,7 +1674,8 @@ function addStudent() {
       fee, terms_owed: terms,
       created_at:    new Date().toISOString()
     };
-    DB.add('cx_students', student);
+    const saved = DB.add('cx_students', student);
+    if (!saved) { toast('❌ Storage full! Free up space or export a backup.', 'error'); return; }
     students.push(student);
 
     $('sName').value  = '';
@@ -1961,8 +2079,8 @@ function saveResult() {
       session:     currentSchool.session,
       created_at:  new Date().toISOString()
     };
-    if (existing > -1) { all[existing] = record; DB.set('cx_results', all); }
-    else               { DB.add('cx_results', record); }
+    if (existing > -1) { all[existing] = record; const ok = DB.set('cx_results', all); if (!ok) { toast('❌ Storage full! Export backup first.', 'error'); return; } }
+    else               { const ok = DB.add('cx_results', record); if (!ok) { toast('❌ Storage full! Export backup first.', 'error'); return; } }
     // Sync in-memory
     results = DB.where('cx_results', r => r.school_id === currentSchool.id);
     $('resSubject').value = ''; $('resCA').value = ''; $('resExam').value = '';
@@ -2443,6 +2561,175 @@ function deleteTeacher(id) {
     renderTeachers();
     toast('Teacher removed.', 'success');
   });
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 22B — EXAM ANALYTICS
+// ═══════════════════════════════════════════════════════
+function initAnalytics() {
+  // Populate class picker with distinct classes that have results
+  const picker = $('analyticsClassPicker');
+  const classesWithResults = [...new Set(
+    students
+      .filter(s => results.some(r => r.student_id === s.id && r.term === currentSchool.term && r.session === currentSchool.session))
+      .map(s => s.student_class)
+  )].filter(Boolean).sort((a, b) => a.localeCompare(b));
+
+  // Rebuild options (preserve selection if still valid)
+  const current = picker.value;
+  picker.innerHTML = '<option value="">— Select a class —</option>';
+  classesWithResults.forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls; opt.textContent = cls;
+    if (cls === current) opt.selected = true;
+    picker.appendChild(opt);
+  });
+
+  if (!classesWithResults.length) {
+    $('analyticsEmpty').style.display = 'block';
+    $('analyticsEmpty').innerHTML = '<div style="font-size:48px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:600;color:var(--grey)">No results entered yet</div><div style="font-size:12px;margin-top:6px;color:var(--grey)">Enter student results first</div>';
+    $('analyticsContent').style.display = 'none';
+    return;
+  }
+
+  if (picker.value) renderAnalytics();
+  else { $('analyticsEmpty').style.display = 'block'; $('analyticsContent').style.display = 'none'; }
+}
+
+function renderAnalytics() {
+  const cls = $('analyticsClassPicker').value;
+  if (!cls) { $('analyticsEmpty').style.display = 'block'; $('analyticsContent').style.display = 'none'; return; }
+
+  $('analyticsEmpty').style.display   = 'none';
+  $('analyticsContent').style.display = 'block';
+
+  const term    = currentSchool.term;
+  const session = currentSchool.session;
+
+  // Students in this class
+  const classStudents = students.filter(s => s.student_class === cls);
+  // Results for this class this term
+  const classResults  = results.filter(r =>
+    r.term === term && r.session === session &&
+    classStudents.some(s => s.id === r.student_id)
+  );
+
+  if (!classResults.length) {
+    $('analyticsContent').style.display = 'none';
+    $('analyticsEmpty').style.display   = 'block';
+    $('analyticsEmpty').innerHTML = `<div style="font-size:48px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:600;color:var(--grey)">No results for ${cls} this term</div>`;
+    return;
+  }
+
+  // ── Per-student averages ──
+  const studentStats = classStudents.map(s => {
+    const sRes = classResults.filter(r => r.student_id === s.id);
+    if (!sRes.length) return null;
+    const total = sRes.reduce((a, r) => a + Number(r.ca_score) + Number(r.exam_score), 0);
+    const avg   = Math.round(total / sRes.length);
+    return { s, avg, count: sRes.length, passed: sRes.filter(r => (Number(r.ca_score)+Number(r.exam_score)) >= 50).length };
+  }).filter(Boolean).sort((a, b) => b.avg - a.avg);
+
+  const classAvg  = studentStats.length ? Math.round(studentStats.reduce((a, x) => a + x.avg, 0) / studentStats.length) : 0;
+  const passRate  = studentStats.length ? Math.round(studentStats.filter(x => x.avg >= 50).length / studentStats.length * 100) : 0;
+  const atRisk    = studentStats.filter(x => x.avg < 40);
+
+  // ── Headline ──
+  $('aClassName').textContent    = cls;
+  $('aTermLabel').textContent    = `${term} · ${session}`;
+  $('aStudentCount').textContent = studentStats.length;
+  $('aClassAvg').textContent     = classAvg + '%';
+  $('aPassRate').textContent     = passRate + '%';
+  $('aFailCount').textContent    = atRisk.length;
+
+  // ── Subject averages bar chart ──
+  const subjects = [...new Set(classResults.map(r => r.subject))].sort();
+  const subjStats = subjects.map(sub => {
+    const subRes = classResults.filter(r => r.subject === sub);
+    const avg    = Math.round(subRes.reduce((a, r) => a + Number(r.ca_score) + Number(r.exam_score), 0) / subRes.length);
+    const pass   = Math.round(subRes.filter(r => (Number(r.ca_score)+Number(r.exam_score)) >= 50).length / subRes.length * 100);
+    return { sub, avg, pass, count: subRes.length };
+  }).sort((a, b) => b.avg - a.avg);
+
+  const barColor = avg => avg >= 70 ? '#16a34a' : avg >= 50 ? '#2368FE' : avg >= 40 ? '#f59e0b' : '#ef4444';
+
+  $('aSubjectBars').innerHTML = subjStats.map(({ sub, avg, pass, count }) => `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div>
+          <span style="font-size:13px;font-weight:700;color:var(--navy)">${sub}</span>
+          <span style="font-size:10px;color:var(--grey);margin-left:6px">${count} student${count>1?'s':''}</span>
+        </div>
+        <div style="text-align:right">
+          <span style="font-size:14px;font-weight:800;color:${barColor(avg)}">${avg}%</span>
+          <span style="font-size:10px;color:var(--grey);margin-left:4px">${pass}% pass</span>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${avg}%;background:${barColor(avg)}"></div>
+      </div>
+    </div>`).join('');
+
+  // ── Top 5 performers ──
+  const top5 = studentStats.slice(0, 5);
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  $('aTopStudents').innerHTML = top5.length ? top5.map(({ s, avg, count }, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:22px;min-width:28px;text-align:center">${medals[i]}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">${s.name}</div>
+        <div style="font-size:11px;color:var(--grey)">${count} subject${count>1?'s':''} entered</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:800;color:${barColor(avg)}">${avg}%</div>
+        <div style="font-size:10px;color:var(--grey)">${getGrade(avg).g}</div>
+      </div>
+    </div>`).join('')
+  : '<div style="color:var(--grey);font-size:13px;padding:8px 0">No data yet.</div>';
+
+  // ── At risk ──
+  $('aAtRisk').innerHTML = atRisk.length ? atRisk.map(({ s, avg }) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">${s.name}</div>
+        <div style="font-size:11px;color:var(--grey)">${s.student_class}</div>
+      </div>
+      <div style="background:#fee2e2;border-radius:8px;padding:4px 10px;text-align:center">
+        <div style="font-size:16px;font-weight:800;color:#dc2626">${avg}%</div>
+        <div style="font-size:10px;color:#dc2626">Needs help</div>
+      </div>
+    </div>`).join('')
+  : '<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;color:#16a34a;font-size:13px;font-weight:600">🎉 No students at risk!</div>';
+
+  // ── Grade distribution ──
+  const gradeBuckets = { A1:0, B2:0, B3:0, C4:0, C5:0, C6:0, D7:0, E8:0, F9:0 };
+  classResults.forEach(r => {
+    const tot = Number(r.ca_score) + Number(r.exam_score);
+    gradeBuckets[getGrade(tot).g]++;
+  });
+  const gradeColors = { A1:'#16a34a', B2:'#2563eb', B3:'#2563eb', C4:'#0891b2', C5:'#0891b2', C6:'#0891b2', D7:'#b45309', E8:'#b45309', F9:'#dc2626' };
+  const totalScores = classResults.length;
+  $('aGradeDist').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">` +
+    Object.entries(gradeBuckets).filter(([,v]) => v > 0).map(([g, count]) => `
+      <div style="background:${gradeColors[g]}15;border:1.5px solid ${gradeColors[g]}40;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:${gradeColors[g]}">${g}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--navy);margin-top:2px">${count}</div>
+        <div style="font-size:10px;color:var(--grey)">${Math.round(count/totalScores*100)}%</div>
+      </div>`).join('') + `</div>`;
+
+  // ── Full ranking ──
+  $('aRanking').innerHTML = studentStats.map(({ s, avg, count }, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="min-width:26px;height:26px;background:${i<3?'var(--navy)':'var(--light)'};color:${i<3?'white':'var(--grey)'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">${s.name}</div>
+        <div style="font-size:10px;color:var(--grey)">${count} subject${count>1?'s':''}</div>
+      </div>
+      <div style="text-align:right">
+        <span style="font-size:14px;font-weight:800;color:${barColor(avg)}">${avg}%</span>
+        <span style="font-size:11px;color:var(--grey);margin-left:5px">${getGrade(avg).g}</span>
+      </div>
+    </div>`).join('');
 }
 
 // ═══════════════════════════════════════════════════════
