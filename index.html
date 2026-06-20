@@ -283,6 +283,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <input class="auth-input" type="text" id="regAddress" placeholder="e.g. Sokoto, Sokoto State" maxlength="200">
       <label class="auth-label">Admin Phone (WhatsApp) *</label>
       <input class="auth-input" type="tel" id="regPhone" placeholder="08012345678" maxlength="11">
+      <label class="auth-label">Alternate Phone (optional)</label>
+      <input class="auth-input" type="tel" id="regPhone2" placeholder="08012345678" maxlength="11">
       <label class="auth-label">Email (optional)</label>
       <input class="auth-input" type="email" id="regEmail" placeholder="school@email.com">
       <label class="auth-label">Current Term</label>
@@ -459,7 +461,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </select>
       <button class="btn primary full" style="margin-top:16px" onclick="addStudent()">Add Student</button>
     </div>
-    <div class="section-header"><div class="section-title">All Students (<span id="sCount">0</span>)</div></div>
+    <div class="section-header"><div class="section-title">All Students (<span id="sCount">0</span>)</div><div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:var(--blue);cursor:pointer" onclick="setAllClassGroups(true)">Expand all</span><span style="font-size:11px;font-weight:700;color:var(--grey);cursor:pointer" onclick="setAllClassGroups(false)">Collapse all</span></div></div>
     <div id="studentOnboard"></div>
     <input class="search-input" type="search" placeholder="Search name or class..." oninput="renderStudents()" id="sSearch">
     <div class="pill-row">
@@ -496,6 +498,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
   <!-- RESULTS -->
   <div class="page" id="page-results">
+    <div class="pill-row">
+      <div class="pill active" id="resTabEntry" onclick="switchResultsTab('entry')">📝 Enter Results</div>
+      <div class="pill" id="resTabAnalytics" onclick="switchResultsTab('analytics')">📊 Analytics</div>
+    </div>
+    <div id="resultsEntryView">
     <div class="form-card">
       <div class="form-title">📝 Enter Results</div>
       <label class="form-label">Select Student</label>
@@ -555,6 +562,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div id="reportCardBtn" style="display:none;padding:0 0 16px">
       <button class="btn full" style="background:linear-gradient(135deg,var(--navy),#1a2f6e);color:white;font-size:16px;padding:16px" onclick="generateReportCard()">🖨️ Generate Report Card</button>
     </div>
+    </div>
+
+    <div id="resultsAnalyticsView" style="display:none">
+      <div class="form-card" style="padding:14px 16px">
+        <label class="form-label" style="margin-top:0">Class</label>
+        <select class="form-select" id="analyticsClass" onchange="renderAnalytics()"><option value="">📊 All Classes</option></select>
+      </div>
+      <div id="analyticsContent"></div>
+    </div>
   </div>
 
   <!-- REPORT PAGE -->
@@ -590,6 +606,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <input class="form-input" type="text" id="settingsAddress" maxlength="200">
       <label class="form-label">Phone</label>
       <input class="form-input" type="tel" id="settingsPhone" maxlength="11">
+      <label class="form-label">Alternate Phone (optional)</label>
+      <input class="form-input" type="tel" id="settingsPhone2" maxlength="11">
       <label class="form-label">Email</label>
       <input class="form-input" type="email" id="settingsEmail">
       <button class="btn primary full" style="margin-top:16px" onclick="saveSchoolProfile()">💾 Save Profile</button>
@@ -889,6 +907,7 @@ let teachers  = [];
 
 let quickPayId   = null;
 let activeFilter = 'all';
+let expandedClasses = new Set();   // class names currently expanded in Students list
 let affData = {}, psyData = {}, comData = {};
 let receiptText = '';
 
@@ -958,7 +977,7 @@ function showPage(name) {
   if (name === 'dashboard') renderDashboard();
   if (name === 'students')  { renderStudents(); populateStudentDropdowns(); }
   if (name === 'payments')  { renderPayments(); populateStudentDropdowns(); }
-  if (name === 'results')   populateStudentDropdowns();
+  if (name === 'results')   { populateStudentDropdowns(); if ($('resultsAnalyticsView')?.style.display !== 'none') renderAnalytics(); }
   if (name === 'report')    renderReport();
   if (name === 'sync')      renderSync();
 }
@@ -1117,6 +1136,7 @@ function registerSchool() {
   const name    = sanitize($('regName').value);
   const address = sanitize($('regAddress').value);
   const phone   = sanitize($('regPhone').value);
+  const phone2  = sanitize($('regPhone2').value);
   const email   = sanitize($('regEmail').value);
   const term    = $('regTerm').value;
   const session = sanitize($('regSession').value) || '2025/2026';
@@ -1127,6 +1147,7 @@ function registerSchool() {
   if (!name)                             { showErr('regError', 'School name is required.');                        return; }
   if (!phone)                            { showErr('regError', 'Admin phone is required.');                        return; }
   if (!validatePhone(phone))             { showErr('regError', 'Enter valid 11-digit Nigerian phone.');            return; }
+  if (phone2 && !validatePhone(phone2))  { showErr('regError', 'Enter a valid 11-digit alternate phone, or leave it blank.'); return; }
   if (!validatePassword(password))       { showErr('regError', 'Password must be at least 8 characters.');        return; }
   if (password !== confirm)              { showErr('regError', 'Passwords do not match.');                         return; }
   if (DB.find('cx_schools', s => s.phone === phone)) { showErr('regError', 'Phone already registered. Use School Login.'); return; }
@@ -1135,7 +1156,7 @@ function registerSchool() {
   try {
     const school = {
       id:           generateId(),
-      name, address, phone, email, term, session,
+      name, address, phone, phone2, email, term, session,
       default_fee:  fee,
       password:     hashPassword(password),
       status:       'active',
@@ -1223,7 +1244,7 @@ function loadSAData() {
             <div class="school-item-name">${sc.name} ${suspended ? '<span class="sub-badge sus">SUSPENDED</span>' : ''}</div>
             ${licBadge}
           </div>
-          <div class="school-item-meta">📱 ${sc.phone || '—'} · 📅 ${sc.term} ${sc.session} · v${sc.version || '?'}</div>
+          <div class="school-item-meta">📱 ${schoolPhones(sc) || '—'} · 📅 ${sc.term} ${sc.session} · v${sc.version || '?'}</div>
           <div class="school-item-stats">
             <div class="school-stat"><strong>${stuCount}</strong>Students</div>
             <div class="school-stat"><strong>${fmt(totalPaid)}</strong>Collected</div>
@@ -1382,6 +1403,7 @@ function loadAppData() {
   if (!currentSchool) return;
   const sid = currentSchool.id;
   students = DB.where('cx_students', s => s.school_id === sid);
+  normalizeExistingClassNames();
   payments = DB.where('cx_payments', p => p.school_id === sid);
   results  = DB.where('cx_results',  r => r.school_id === sid);
   teachers = DB.where('cx_teachers', t => t.school_id === sid);
@@ -1412,6 +1434,58 @@ function getGrade(t) {
   if (t >= 40) return { g: 'E8', r: 'Pass',      c: '#b45309' };
   return { g: 'F9', r: 'Fail', c: '#dc2626' };
 }
+function schoolPhones(sc) {
+  return [sc?.phone, sc?.phone2].filter(Boolean).join(' / ');
+}
+
+// ─── Class-name canonicalization ───
+// Prevents "SSS 2" / "Sss2" / "sss 2" from being treated as different
+// classes anywhere in the app (Students list, dropdowns, Analytics, batch
+// print). Matching is case- and spacing-insensitive; whichever casing was
+// used most often on file becomes the one display label.
+function classKey(raw) {
+  return (raw || 'No Class').trim().toLowerCase().replace(/\s+/g, '');
+}
+
+// When adding a new student, reuse whatever casing already exists for that
+// class instead of letting a typo fork a duplicate group.
+function canonicalizeClassName(raw) {
+  const clean = (raw || '').trim().replace(/\s+/g, ' ');
+  if (!clean) return clean;
+  const key = classKey(clean);
+  const existing = students.find(s => classKey(s.student_class) === key);
+  return existing ? existing.student_class : clean;
+}
+
+// One-time cleanup for data already on file: merges class names that only
+// differ by case/spacing into a single canonical casing (whichever variant
+// is most common), and persists the fix so it doesn't keep reappearing.
+function normalizeExistingClassNames() {
+  const groups = {};
+  students.forEach(s => {
+    const key = classKey(s.student_class);
+    (groups[key] = groups[key] || []).push(s);
+  });
+  Object.values(groups).forEach(group => {
+    if (group.length < 2) return;
+    const tally = {};
+    group.forEach(s => {
+      const label = (s.student_class || 'No Class').trim().replace(/\s+/g, ' ');
+      tally[label] = (tally[label] || 0) + 1;
+    });
+    const labels = Object.keys(tally);
+    if (labels.length < 2) return; // already consistent
+    const canonical = labels.sort((a, b) => tally[b] - tally[a])[0];
+    group.forEach(s => {
+      const clean = (s.student_class || 'No Class').trim().replace(/\s+/g, ' ');
+      if (clean !== canonical) {
+        s.student_class = canonical;
+        DB.update('cx_students', s.id, { student_class: canonical });
+      }
+    });
+  });
+}
+
 function waMsg(s) {
   const { balance } = getBalance(s);
   return `Dear Parent/Guardian,\n\nThis is a reminder from *${currentSchool.name}*.\nYour ward *${s.name}* has an outstanding fee balance of *${fmt(balance)}* for *${currentSchool.term} ${currentSchool.session}*.\n\nKindly make payment at the earliest convenience.\n\nThank you.\n_Powered by Chinexo_`;
@@ -1530,6 +1604,7 @@ function renderDashboard() {
   if ($('settingsName'))       $('settingsName').value       = currentSchool.name    || '';
   if ($('settingsAddress'))    $('settingsAddress').value    = currentSchool.address || '';
   if ($('settingsPhone'))      $('settingsPhone').value      = currentSchool.phone   || '';
+  if ($('settingsPhone2'))     $('settingsPhone2').value     = currentSchool.phone2  || '';
   if ($('settingsEmail'))      $('settingsEmail').value      = currentSchool.email   || '';
   if ($('settingsTerm'))       $('settingsTerm').value       = currentSchool.term    || 'First Term';
   if ($('settingsSession'))    $('settingsSession').value    = currentSchool.session || '2025/2026';
@@ -1542,7 +1617,7 @@ function renderDashboard() {
 // ═══════════════════════════════════════════════════════
 function addStudent() {
   const name  = sanitize($('sName').value);
-  const cls   = sanitize($('sClass').value);
+  const cls   = canonicalizeClassName(sanitize($('sClass').value));
   const admissionNo = sanitize($('sAdmissionNo').value);
   const gender = $('sGender').value;
   const phone = sanitize($('sPhone').value);
@@ -1614,10 +1689,17 @@ function renderStudents() {
   const sortedClasses = Object.keys(groups).sort((a, b) => a.localeCompare(b));
   const gIcon = g => g === 'Male' ? '👦' : '👧';
 
-  $('studentList').innerHTML = sortedClasses.map(cls => {
+  // While actively searching/filtering, auto-expand every group that has
+  // matches so results are visible immediately — collapsing is for browsing,
+  // not for hiding what was just searched for.
+  const isFiltering = !!q || activeFilter !== 'all';
+
+  $('studentList').innerHTML = sortedClasses.map((cls, idx) => {
     const grp     = groups[cls];
     const males   = grp.filter(s => s.gender === 'Male').length;
     const females = grp.filter(s => s.gender === 'Female').length;
+    const gid      = `cls-grp-${idx}`;
+    const isOpen   = isFiltering || expandedClasses.has(cls);
 
     const cards = grp.map(s => {
       const { owed, paid, balance } = getBalance(s);
@@ -1650,18 +1732,40 @@ function renderStudents() {
       </div>`;
     }).join('');
 
-    return `<div style="margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:white;border-radius:10px;padding:9px 14px;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:800;letter-spacing:.3px">📚 ${cls}</div>
+    return `<div style="margin-bottom:12px">
+      <div onclick="toggleClassGroup('${gid}','${cls.replace(/'/g, "\\'")}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:white;border-radius:10px;padding:9px 14px;${isOpen ? 'margin-bottom:8px' : ''}">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span id="${gid}-arrow" style="display:inline-block;transition:transform .2s;transform:rotate(${isOpen ? '90' : '0'}deg);font-size:11px">▶</span>
+          <div style="font-size:13px;font-weight:800;letter-spacing:.3px">📚 ${cls}</div>
+        </div>
         <div style="display:flex;gap:8px;font-size:11px;font-weight:700">
           <span style="background:rgba(255,255,255,.12);padding:2px 9px;border-radius:10px">${grp.length} students</span>
           ${males   > 0 ? `<span style="background:#1d4ed8;padding:2px 8px;border-radius:10px">👦 ${males}</span>`   : ''}
           ${females > 0 ? `<span style="background:#be185d;padding:2px 8px;border-radius:10px">👧 ${females}</span>` : ''}
         </div>
       </div>
-      ${cards}
+      <div id="${gid}" style="display:${isOpen ? 'block' : 'none'}">
+        ${cards}
+      </div>
     </div>`;
   }).join('');
+}
+
+function toggleClassGroup(gid, cls) {
+  const el    = $(gid);
+  const arrow = $(gid + '-arrow');
+  if (!el) return;
+  const opening = el.style.display === 'none';
+  el.style.display = opening ? 'block' : 'none';
+  if (arrow) arrow.style.transform = `rotate(${opening ? 90 : 0}deg)`;
+  el.previousElementSibling.style.marginBottom = opening ? '8px' : '0';
+  if (opening) expandedClasses.add(cls); else expandedClasses.delete(cls);
+}
+
+function setAllClassGroups(open) {
+  if (open) { expandedClasses = new Set(students.map(s => s.student_class || 'No Class')); }
+  else      { expandedClasses.clear(); }
+  renderStudents();
 }
 
 function filterStudents(status) {
@@ -1732,6 +1836,15 @@ function populateStudentDropdowns() {
     bpSel.innerHTML = '<option value="">-- Select Class --</option>' +
       sortedClasses.map(cls => `<option value="${cls}">📚 ${cls} (${groups[cls].length})</option>`).join('');
     if (curBp) bpSel.value = curBp;
+  }
+
+  // Analytics — class dropdown (keeps an "All Classes" option at the top)
+  const anSel = $('analyticsClass');
+  if (anSel) {
+    const curAn = anSel.value;
+    anSel.innerHTML = '<option value="">📊 All Classes</option>' +
+      sortedClasses.map(cls => `<option value="${cls}">📚 ${cls} (${groups[cls].length})</option>`).join('');
+    if (curAn) anSel.value = curAn;
   }
 }
 
@@ -2027,6 +2140,153 @@ function deleteResult(id) {
   });
 }
 
+// ─── Results Analytics (class & school-wide performance view) ───
+function switchResultsTab(tab) {
+  const isEntry = tab === 'entry';
+  $('resultsEntryView').style.display     = isEntry ? 'block' : 'none';
+  $('resultsAnalyticsView').style.display = isEntry ? 'none'  : 'block';
+  $('resTabEntry').classList.toggle('active', isEntry);
+  $('resTabAnalytics').classList.toggle('active', !isEntry);
+  if (!isEntry) renderAnalytics();
+}
+
+function renderAnalytics() {
+  const el = $('analyticsContent'); if (!el) return;
+  const cls   = $('analyticsClass')?.value || '';
+  const scope = cls ? students.filter(s => s.student_class === cls) : students;
+
+  if (!scope.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">No students here yet.</div></div>';
+    return;
+  }
+
+  const scopeIds = new Set(scope.map(s => s.id));
+  const termRes  = results.filter(r =>
+    r.term === currentSchool.term && r.session === currentSchool.session && scopeIds.has(r.student_id)
+  );
+
+  if (!termRes.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">No results entered yet for ${currentSchool.term} ${currentSchool.session}${cls ? ' in ' + cls : ''}.<br><small style="font-size:12px;color:var(--grey)">Enter subject scores on the "Enter Results" tab first.</small></div></div>`;
+    return;
+  }
+
+  // Per-student averages — only students with at least one score this term
+  const byStudent = {};
+  termRes.forEach(r => {
+    (byStudent[r.student_id] = byStudent[r.student_id] || []).push(Number(r.ca_score) + Number(r.exam_score));
+  });
+  const studentAvgs = Object.keys(byStudent).map(sid => {
+    const scores = byStudent[sid];
+    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const stu = students.find(s => s.id === sid);
+    return { id: sid, name: stu ? stu.name : 'Unknown', cls: stu ? (stu.student_class || '—') : '—', avg };
+  }).sort((a, b) => b.avg - a.avg);
+
+  const classAvg     = Math.round(studentAvgs.reduce((a, x) => a + x.avg, 0) / studentAvgs.length);
+  const passCount     = termRes.filter(r => (Number(r.ca_score) + Number(r.exam_score)) >= 40).length;
+  const passRate       = Math.round(passCount / termRes.length * 100);
+  const enteredCount   = studentAvgs.length;
+
+  // Subject breakdown (case-insensitive grouping so "Maths"/"maths" don't split)
+  const bySubject = {};
+  termRes.forEach(r => {
+    const label = r.subject.trim();
+    const key   = label.toLowerCase();
+    if (!bySubject[key]) bySubject[key] = { label, scores: [] };
+    bySubject[key].scores.push(Number(r.ca_score) + Number(r.exam_score));
+  });
+  const subjectRows = Object.values(bySubject).map(sub => {
+    const n    = sub.scores.length;
+    const avg  = Math.round(sub.scores.reduce((a, b) => a + b, 0) / n);
+    const high = Math.max(...sub.scores);
+    const low  = Math.min(...sub.scores);
+    const pass = Math.round(sub.scores.filter(s => s >= 40).length / n * 100);
+    return { label: sub.label, n, avg, high, low, pass };
+  }).sort((a, b) => b.avg - a.avg);
+
+  // Grade distribution across every individual subject score
+  const GRADE_META = {
+    A1: { c: '#16a34a' }, B2: { c: '#2563eb' }, B3: { c: '#2563eb' },
+    C4: { c: '#0891b2' }, C5: { c: '#0891b2' }, C6: { c: '#0891b2' },
+    D7: { c: '#b45309' }, E8: { c: '#b45309' }, F9: { c: '#dc2626' }
+  };
+  const GRADE_ORDER = Object.keys(GRADE_META);
+  const distCounts = {}; GRADE_ORDER.forEach(g => distCounts[g] = 0);
+  termRes.forEach(r => { distCounts[getGrade(Number(r.ca_score) + Number(r.exam_score)).g]++; });
+  const maxDist = Math.max(1, ...Object.values(distCounts));
+
+  const top5 = studentAvgs.slice(0, 5);
+  const bottomStart = Math.max(top5.length, studentAvgs.length - 5);
+  const bottom5 = studentAvgs.slice(bottomStart).reverse();
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:white;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:24px;font-weight:800;color:var(--navy)">${classAvg}%</div>
+        <div style="font-size:11px;color:var(--grey)">${cls ? 'Class' : 'School'} Average</div>
+      </div>
+      <div style="background:white;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:24px;font-weight:800;color:${passRate >= 50 ? 'var(--green)' : 'var(--red)'}">${passRate}%</div>
+        <div style="font-size:11px;color:var(--grey)">Pass Rate (≥40)</div>
+      </div>
+      <div style="background:white;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:24px;font-weight:800;color:var(--blue)">${enteredCount}/${scope.length}</div>
+        <div style="font-size:11px;color:var(--grey)">Students With Results</div>
+      </div>
+      <div style="background:white;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:24px;font-weight:800;color:var(--navy)">${subjectRows.length}</div>
+        <div style="font-size:11px;color:var(--grey)">Subjects Recorded</div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="result-subject" style="margin-bottom:10px">📚 Subject Breakdown</div>
+      ${subjectRows.map(sub => `
+        <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px">
+            <span>${sub.label}</span><span>${sub.avg}% avg</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--grey)">
+            <span>High ${sub.high}</span><span>Low ${sub.low}</span><span>${sub.pass}% pass</span><span>${sub.n} score${sub.n > 1 ? 's' : ''}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="result-card">
+      <div class="result-subject" style="margin-bottom:10px">🏆 Top Performers</div>
+      ${top5.map((s, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;${i < top5.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
+          <div style="font-size:13px;color:var(--navy)"><strong>#${i + 1}</strong> ${s.name}${!cls ? ` <span style="color:var(--grey);font-size:11px">· ${s.cls}</span>` : ''}</div>
+          <strong style="color:var(--green)">${s.avg}%</strong>
+        </div>`).join('')}
+    </div>
+
+    ${bottom5.length ? `<div class="result-card">
+      <div class="result-subject" style="margin-bottom:10px">⚠️ Needs Support</div>
+      ${bottom5.map((s, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;${i < bottom5.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
+          <div style="font-size:13px;color:var(--navy)">${s.name}${!cls ? ` <span style="color:var(--grey);font-size:11px">· ${s.cls}</span>` : ''}</div>
+          <strong style="color:${s.avg < 40 ? 'var(--red)' : 'var(--amber)'}">${s.avg}%</strong>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <div class="result-card">
+      <div class="result-subject" style="margin-bottom:10px">📊 Grade Distribution</div>
+      ${GRADE_ORDER.map(g => {
+        const count = distCounts[g];
+        const pct   = Math.round(count / maxDist * 100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;font-size:11px;font-weight:700;color:var(--navy)">${g}</div>
+          <div style="flex:1;background:var(--light);border-radius:6px;overflow:hidden;height:16px">
+            <div style="width:${pct}%;height:100%;background:${GRADE_META[g].c}"></div>
+          </div>
+          <div style="width:24px;font-size:11px;color:var(--grey);text-align:right">${count}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
 function saveAffective() {
   const sid = $('resStudent').value; if (!sid) { toast('Select a student first', 'error'); return; }
   const payload = { student_id: sid, school_id: currentSchool.id, term: currentSchool.term, session: currentSchool.session, ...affData };
@@ -2134,7 +2394,7 @@ function buildReportCardCard(student) {
     <div>
       <div class="sn">${currentSchool.name}</div>
       <div style="font-size:10px;color:#555;margin-top:2px">${currentSchool.address||''}</div>
-      <div style="font-size:10px;color:#555">${currentSchool.phone||''}</div>
+      <div style="font-size:10px;color:#555">${schoolPhones(currentSchool)}</div>
       <div style="margin-top:4px"><span style="border:2px solid #0F1B3D;padding:2px 8px;font-size:10px;font-weight:800;color:#0F1B3D;text-transform:uppercase;letter-spacing:.5px">Academic Progress Report Card</span></div>
     </div>
   </div>
@@ -2400,7 +2660,7 @@ function generateReceipt(payId) {
     <div class="receipt-row"><span class="receipt-row-label">Term</span><span class="receipt-row-val">${sc.term||''} ${sc.session||''}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Remaining Balance</span><span class="receipt-row-val" style="color:${balance>0?'var(--red)':'var(--green)'}">${fmt(balance)}</span></div>
     <div class="receipt-row"><span class="receipt-row-label">Recorded by</span><span class="receipt-row-val">${p.recorded_by||'Admin'}</span></div>
-    <div class="receipt-footer">Official receipt issued by ${sc.name}<br>Powered by Chinexo · ${sc.phone||''}</div>
+    <div class="receipt-footer">Official receipt issued by ${sc.name}<br>Powered by Chinexo · ${schoolPhones(sc)}</div>
   </div>`;
   $('receiptModal').classList.add('open');
 }
@@ -2451,11 +2711,13 @@ function saveSchoolProfile() {
   const name    = sanitize($('settingsName').value);
   const address = sanitize($('settingsAddress').value);
   const phone   = sanitize($('settingsPhone').value);
+  const phone2  = sanitize($('settingsPhone2').value);
   const email   = sanitize($('settingsEmail').value);
   if (!name) { toast('School name is required', 'error'); return; }
+  if (phone2 && !validatePhone(phone2)) { toast('Enter a valid 11-digit alternate phone, or leave it blank', 'error'); return; }
   const extras = window._schoolEdits || {};
-  DB.update('cx_schools', currentSchool.id, { name, address, phone, email, ...extras });
-  currentSchool = { ...currentSchool, name, address, phone, email, ...extras };
+  DB.update('cx_schools', currentSchool.id, { name, address, phone, phone2, email, ...extras });
+  currentSchool = { ...currentSchool, name, address, phone, phone2, email, ...extras };
   window._schoolEdits = {};
   persistSession({ type: 'admin', schoolId: currentSchool.id });
   $('headerSchoolName').textContent = name;
